@@ -1,41 +1,320 @@
-import React from "react";
-import {
-  IconArrowTrendUp as TrendUp,
-  IconCircleDollar as Dollar,
-  IconAlarmClock as Clock,
-  IconBankShield as Shield,
-  IconChartBarTrendUp as ChartUp,
-  IconBadgeDollar as BadgeDollar,
-} from "nucleo-sharp";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maxipesca C.A. · Dashboard ROI Salesforce</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #252424; color: #e8e6e6;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 24px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
-/* ---------- Datos (documento ROI Maxipesca C.A. · 2026) ---------- */
+  .panel {
+    background: #2f2e2e; border: 1px solid #3b3a3a; border-radius: 14px; padding: 20px;
+  }
+  .ptitle { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #f2c811; }
+  .psub { font-size: 11px; color: #9b9a9a; margin-top: 2px; }
 
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 10px; background: #f2c811; color: #252424;
+    display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900;
+  }
+  .brand h1 { font-size: 19px; color: #fff; letter-spacing: -.01em; }
+  .brand p { font-size: 12px; color: #9b9a9a; margin-top: 2px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 999px; }
+  .chip.y { background: rgba(242,200,17,.15); color: #f2c811; }
+  .chip.g { background: rgba(74,73,73,.4); color: #c9c8c8; }
+
+  /* KPIs */
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+  .kpi { background: #2f2e2e; border: 1px solid #3b3a3a; border-radius: 14px; padding: 14px 16px; }
+  .kpi .top { display: flex; justify-content: space-between; align-items: center; }
+  .kpi .lbl { font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #9b9a9a; }
+  .kpi .val { font-size: 24px; font-weight: 800; margin-top: 8px; }
+  .kpi .sub { font-size: 10px; color: #9b9a9a; margin-top: 3px; }
+  .kpi svg { width: 17px; height: 17px; }
+
+  /* Grid de filas */
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .c2 { grid-column: span 2; }
+
+  /* Leyenda */
+  .legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .legend span { font-size: 12px; color: #c9c8c8; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  .chart { width: 100%; height: auto; margin-top: 14px; display: block; }
+  .chart text { font-family: inherit; }
+
+  /* Donut */
+  .donut-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .donut-wrap { position: relative; width: 170px; height: 170px; flex-shrink: 0; }
+  .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .donut-center b { font-size: 17px; color: #fff; }
+  .donut-center small { font-size: 10px; color: #9b9a9a; }
+  .dlegend { flex: 1; display: flex; flex-direction: column; gap: 8px; font-size: 12px; }
+  .dlegend .r { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .dlegend .r span { color: #c9c8c8; display: flex; align-items: center; gap: 7px; }
+  .dlegend .r b { color: #fff; white-space: nowrap; }
+  .dlegend .r b small { color: #9b9a9a; font-weight: 400; }
+  .dlegend .total { border-top: 1px solid #3b3a3a; padding-top: 8px; }
+  .dlegend .total span { color: #f2c811; font-weight: 700; }
+
+  /* Tabla escenarios */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 14px; border: 1px solid #3b3a3a; border-radius: 10px; overflow: hidden; }
+  th { background: #373636; color: #9b9a9a; font-weight: 600; text-align: left; padding: 9px 12px; }
+  th.r, td.r { text-align: right; }
+  th.y { color: #f2c811; } th.b { color: #00a4ef; }
+  td { padding: 9px 12px; color: #c9c8c8; border-top: 1px solid #3b3a3a; }
+  tr:nth-child(even) td { background: #2b2a2a; }
+  td b { color: #fff; } td.pb { color: #9fd8f5; font-weight: 600; }
+  .note { margin-top: 14px; background: rgba(127,186,0,.1); color: #b9d98a; font-size: 11px; line-height: 1.6; padding: 12px; border-radius: 10px; }
+
+  /* Footer */
+  .footer { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 11px; color: #9b9a9a; padding: 16px 20px; }
+  .footer b { color: #f2c811; }
+
+  .bar:hover { opacity: .8; cursor: default; }
+
+  @media (max-width: 1100px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 900px) {
+    .row { grid-template-columns: 1fr; }
+    .c2 { grid-column: auto; }
+    .brand h1 { font-size: 16px; }
+  }
+  @media (max-width: 620px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="panel header">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div>
+        <h1>Maxipesca C.A. · ROI Plataforma Salesforce</h1>
+        <p>Digitalización de la fuerza de ventas · 3 vendedores · Facturación ≈ US$ 15.000/mes</p>
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip y">ANÁLISIS EJECUTIVO 2026</span>
+      <span class="chip g">DOCUMENTO INTERNO</span>
+    </div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- FILA 1 -->
+  <div class="row">
+    <div class="panel c2">
+      <h2 class="ptitle">Excedente operativo acumulado vs. inversión</h2>
+      <p class="psub">Línea de tiempo del retorno · Base: US$ 1.140/mes · Pesimista (50% adopción): US$ 570/mes</p>
+      <div class="legend">
+        <span><i class="dot" style="background:#f2c811"></i> Escenario base</span>
+        <span><i class="dot" style="background:#00a4ef"></i> Pesimista (50%)</span>
+        <span><i class="dot" style="background:#7fba00"></i> Inversión US$ 900 · break-even día 24</span>
+      </div>
+      <svg class="chart" id="areaChart" viewBox="0 0 760 310" role="img" aria-label="Excedente acumulado"></svg>
+    </div>
+
+    <div class="panel">
+      <h2 class="ptitle">Composición del beneficio mensual</h2>
+      <p class="psub">US$ 1.140 generados cada mes</p>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 200 200" width="170" height="170" id="donut"></svg>
+        <div class="donut-center"><b>US$ 1.140</b><small>por mes</small></div>
+      </div>
+      <div class="dlegend">
+        <div class="r"><span><i class="dot" style="background:#f2c811"></i> Ahorros directos</span><b>US$ 440 <small>(38,6%)</small></b></div>
+        <div class="r"><span><i class="dot" style="background:#00a4ef"></i> Incremento de ingresos</span><b>US$ 700 <small>(61,4%)</small></b></div>
+        <div class="r total"><span>Total mensual</span><b>US$ 1.140</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILA 2 -->
+  <div class="row">
+    <div class="panel">
+      <h2 class="ptitle">Ahorros directos por concepto</h2>
+      <p class="psub">Subtotal: US$ 440 / mes</p>
+      <svg class="chart" id="ahorrosChart" viewBox="0 0 760 232" role="img" aria-label="Ahorros por concepto"></svg>
+    </div>
+    <div class="panel">
+      <h2 class="ptitle">Incremento de ingresos por concepto</h2>
+      <p class="psub">Subtotal: US$ 700 / mes</p>
+      <svg class="chart" id="ingresosChart" viewBox="0 0 760 130" role="img" aria-label="Ingresos por concepto"></svg>
+    </div>
+  </div>
+
+  <!-- FILA 3 -->
+  <div class="row">
+    <div class="panel c2">
+      <h2 class="ptitle">Comparativa de costos vs. alternativas comerciales</h2>
+      <p class="psub">A 3 años: Maxipesca US$ 900 · Salesforce US$ 5.400 · SAP US$ 15.000+ → 6× más económica</p>
+      <div class="legend">
+        <span><i class="dot" style="background:#f2c811"></i> Año 1</span>
+        <span><i class="dot" style="background:#e8a33d"></i> A 3 años</span>
+      </div>
+      <svg class="chart" id="compChart" viewBox="0 0 760 270" role="img" aria-label="Comparativa de costos"></svg>
+    </div>
+
+    <div class="panel">
+      <h2 class="ptitle">Escenario base vs. pesimista</h2>
+      <p class="psub">Supuesto: solo 50% de adopción de la app</p>
+      <table>
+        <thead><tr><th>Métrica</th><th class="r y">Base</th><th class="r b">Pesim.</th></tr></thead>
+        <tbody>
+          <tr><td>Beneficio mensual</td><td class="r"><b>US$ 1.140</b></td><td class="r pb">US$ 570</td></tr>
+          <tr><td>Payback period</td><td class="r"><b>24 días</b></td><td class="r pb">47 días</td></tr>
+          <tr><td>ROI a 12 meses</td><td class="r"><b>1.420%</b></td><td class="r pb">660%</td></tr>
+          <tr><td>Retorno neto año 1</td><td class="r"><b>US$ 12.780</b></td><td class="r pb">US$ 5.940</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Incluso con 50% de adopción, el ROI anual es 660%. No existe un escenario razonable donde esta inversión pierda dinero.</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="panel footer">
+    <span>Fuente: análisis ejecutivo ROI Maxipesca C.A. · Proyección con margen de seguridad del 50% · Costos recurrentes: US$ 0/mes (Server: Vercel, Database: Supabase PostgreSQL, MontosVE "Proveedor de data tiempo real BCV")</span>
+    <b>US$ 1 invertido regresa como US$ 14,20</b>
+  </div>
+</div>
+
+<script>
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
 const usd = (n) => "US$ " + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const GRAY = "#9b9a9a", GRID = "#4a4949";
 
-const KPIs = [
-  { label: "Inversión inicial", value: "US$ 900", sub: "Pago único · Sin recurrentes", Icon: Dollar, accent: "#f2c811" },
-  { label: "ROI a 12 meses", value: "1.420%", sub: "14,2× la inversión", Icon: TrendUp, accent: "#7fba00" },
-  { label: "Payback period", value: "24 días", sub: "≈ 0,79 meses", Icon: Clock, accent: "#00a4ef" },
-  { label: "Ratio por dólar", value: "14,20×", sub: "Cada US$ 1 → US$ 14,20", Icon: ChartUp, accent: "#f2c811" },
-  { label: "Beneficio mensual", value: "US$ 1.140", sub: "Ahorros + ingresos", Icon: BadgeDollar, accent: "#e8a33d" },
-  { label: "Retorno neto año 1", value: "US$ 12.780", sub: "Beneficio – inversión", Icon: Shield, accent: "#7fba00" },
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (attrs && attrs._txt) e.textContent = attrs._txt;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+/* ---------- ICONOS KPI ---------- */
+const ICONS = {
+  dollar: '<circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 6.5v11M9.2 9.2c0-1.4 1.2-2.2 2.8-2.2s2.8.8 2.8 2-1 1.8-2.8 2.2-2.9 1-2.9 2.2 1.2 2.2 2.9 2.2 2.9-.8 2.9-2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  trend: '<path d="M3 15l5.5-5.5L12 13l6.5-6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 6.5h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  clock: '<circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  ratio: '<path d="M5 20V10M12 20V4M19 20v-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+  coins: '<rect x="2.5" y="6.5" width="19" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  shield: '<path d="M12 2.5l7.5 3v6c0 5-3.2 8.3-7.5 10-4.3-1.7-7.5-5-7.5-10v-6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.8 12l2.2 2.2 4.2-4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
+};
+
+const KPIS = [
+  { label: "Inversión inicial", value: "US$ 900", sub: "Pago único · Sin recurrentes", icon: "dollar", color: "#f2c811" },
+  { label: "ROI a 12 meses", value: "1.420%", sub: "14,2× la inversión", icon: "trend", color: "#7fba00" },
+  { label: "Payback period", value: "24 días", sub: "≈ 0,79 meses", icon: "clock", color: "#00a4ef" },
+  { label: "Ratio por dólar", value: "14,20×", sub: "Cada US$ 1 → US$ 14,20", icon: "ratio", color: "#f2c811" },
+  { label: "Beneficio mensual", value: "US$ 1.140", sub: "Ahorros + ingresos", icon: "coins", color: "#e8a33d" },
+  { label: "Retorno neto año 1", value: "US$ 12.780", sub: "Beneficio – inversión", icon: "shield", color: "#7fba00" }
 ];
+
+const kpisEl = document.getElementById("kpis");
+KPIS.forEach(k => {
+  const d = document.createElement("div");
+  d.className = "kpi";
+  d.innerHTML =
+    '<div class="top"><span class="lbl">' + k.label + '</span>' +
+    '<svg viewBox="0 0 24 24" style="color:' + k.color + '">' + ICONS[k.icon] + '</svg></div>' +
+    '<div class="val" style="color:' + k.color + '">' + k.value + '</div>' +
+    '<div class="sub">' + k.sub + '</div>';
+  kpisEl.appendChild(d);
+});
+
+/* ---------- GRÁFICO DE ÁREA: ACUMULADO ---------- */
+(function () {
+  const svg = document.getElementById("areaChart");
+  const W = 760, H = 310, padL = 46, padR = 14, padT = 18, padB = 32;
+  const maxY = 14000, N = 12;
+  const X = i => padL + (i * (W - padL - padR) / N);
+  const Y = v => padT + (1 - v / maxY) * (H - padT - padB);
+
+  // grid + eje Y
+  for (let v = 0; v <= 14000; v += 2000) {
+    el("line", { x1: padL, y1: Y(v), x2: W - padR, y2: Y(v), stroke: GRID, "stroke-dasharray": "3 3" }, svg);
+    el("text", { x: padL - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 11, fill: GRAY, _txt: v === 0 ? "0" : (v / 1000) + "k" }, svg);
+  }
+  // eje X
+  for (let i = 0; i <= N; i++) {
+    el("text", { x: X(i), y: H - 10, "text-anchor": "middle", "font-size": 11, fill: GRAY, _txt: i === 0 ? "Día 0" : "M" + i }, svg);
+  }
+
+  function area(vals, color, gradId, opTop) {
+    const g = el("linearGradient", { id: gradId, x1: 0, y1: 0, x2: 0, y2: 1 }, el("defs", {}, svg));
+    el("stop", { offset: "0%", "stop-color": color, "stop-opacity": opTop }, g);
+    el("stop", { offset: "100%", "stop-color": color, "stop-opacity": 0.03 }, g);
+
+    let path = "", fillPath = "";
+    vals.forEach((v, i) => { path += (i ? " L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); });
+    fillPath = path + " L" + X(N).toFixed(1) + " " + Y(0) + " L" + X(0).toFixed(1) + " " + Y(0) + " Z";
+
+    const a = el("path", { d: fillPath, fill: "url(#" + gradId + ")", stroke: "none" }, svg);
+    const l = el("path", { d: path, fill: "none", stroke: color, "stroke-width": 2.4 }, svg);
+    // tooltips nativos
+    const t = document.createElementNS(NS, "title");
+    t.textContent = "Mes 12: " + usd(vals[12]);
+    l.appendChild(t);
+    const t2 = document.createElementNS(NS, "title");
+    t2.textContent = "Mes 12: " + usd(vals[12]);
+    a.appendChild(t2);
+  }
+
+  area(Array.from({ length: 13 }, (_, m) => 570 * m), "#00a4ef", "gPes", 0.35);
+  area(Array.from({ length: 13 }, (_, m) => 1140 * m), "#f2c811", "gBase", 0.45);
+
+  // línea de referencia: inversión
+  el("line", { x1: padL, y1: Y(900), x2: W - padR, y2: Y(900), stroke: "#7fba00", "stroke-dasharray": "6 4", "stroke-width": 1.5 }, svg);
+  el("text", { x: W - padR - 4, y: Y(900) + 16, "text-anchor": "end", "font-size": 11, fill: "#7fba00", _txt: "Inversión US$ 900 · break-even día 24" }, svg);
+})();
+
+/* ---------- DONUT ---------- */
+(function () {
+  const svg = document.getElementById("donut");
+  const C = 2 * Math.PI * 70;
+  const pA = 440 / 1140;
+  el("circle", { cx: 100, cy: 100, r: 70, fill: "none", stroke: "#373636", "stroke-width": 22 }, svg);
+  el("circle", {
+    cx: 100, cy: 100, r: 70, fill: "none", stroke: "#f2c811", "stroke-width": 22,
+    "stroke-dasharray": (pA * C) + " " + C, transform: "rotate(-90 100 100)"
+  }, svg).appendChild(document.createElementNS(NS, "title")).textContent = "Ahorros: US$ 440";
+  el("circle", {
+    cx: 100, cy: 100, r: 70, fill: "none", stroke: "#00a4ef", "stroke-width": 22,
+    "stroke-dasharray": ((1 - pA) * C) + " " + C, "stroke-dashoffset": (-pA * C), transform: "rotate(-90 100 100)"
+  }, svg).appendChild(document.createElementNS(NS, "title")).textContent = "Ingresos: US$ 700";
+})();
+
+/* ---------- BARRAS HORIZONTALES ---------- */
+function hbars(svgId, data, color, rowH) {
+  const svg = document.getElementById(svgId);
+  const W = 760, labelW = 172, padR = 60;
+  const maxV = Math.max(...data.map(d => d.value));
+  const barArea = W - labelW - padR;
+  data.forEach((d, i) => {
+    const y = i * rowH + 6, h = Math.min(18, rowH - 10);
+    el("text", { x: 0, y: y + h / 2 + 4, "font-size": 11, fill: GRAY, _txt: d.name }, svg);
+    const g = el("g", { class: "bar" }, svg);
+    const r = el("rect", { x: labelW, y: y, width: Math.max(2, (d.value / maxV) * barArea), height: h, rx: 4, fill: color }, g);
+    const t = document.createElementNS(NS, "title");
+    t.textContent = usd(d.value) + " / mes";
+    r.appendChild(t);
+    el("text", { x: labelW + Math.max(2, (d.value / maxV) * barArea) + 8, y: y + h / 2 + 4, "font-size": 11, fill: "#fff", "font-weight": 600, _txt: usd(d.value) }, svg);
+  });
+}
 
 const ahorros = [
   { name: "Visitas fantasma (GPS)", value: 120 },
@@ -43,336 +322,52 @@ const ahorros = [
   { name: "Horas admin facturación", value: 80 },
   { name: "Sync ERP (a2 / Saint)", value: 60 },
   { name: "Cobranza móvil en campo", value: 50 },
-  { name: "Errores tasa BCV", value: 40 },
+  { name: "Errores tasa BCV", value: 40 }
 ];
-
 const ingresos = [
   { name: "Productividad vendedores (+10%)", value: 300 },
   { name: "Conversión prospectos (push)", value: 250 },
-  { name: "Aprobación rápida de ventas", value: 150 },
+  { name: "Aprobación rápida de ventas", value: 150 }
 ];
+hbars("ahorrosChart", ahorros, "#f2c811", 36);
+hbars("ingresosChart", ingresos, "#00a4ef", 36);
 
-const composicion = [
-  { name: "Ahorros directos", value: 440 },
-  { name: "Incremento de ingresos", value: 700 },
-];
+/* ---------- COMPARATIVA BARRAS AGRUPADAS ---------- */
+(function () {
+  const svg = document.getElementById("compChart");
+  const W = 760, H = 270, padL = 46, padR = 14, padT = 22, padB = 30;
+  const maxY = 16000;
+  const Y = v => padT + (1 - v / maxY) * (H - padT - padB);
 
-const acumulado = Array.from({ length: 13 }, (_, m) => ({
-  mes: m === 0 ? "Día 0" : "M" + m,
-  base: 1140 * m,
-  pesimista: 570 * m,
-}));
+  for (let v = 0; v <= 16000; v += 4000) {
+    el("line", { x1: padL, y1: Y(v), x2: W - padR, y2: Y(v), stroke: GRID, "stroke-dasharray": "3 3" }, svg);
+    el("text", { x: padL - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 11, fill: GRAY, _txt: v === 0 ? "0" : (v / 1000) + "k" }, svg);
+  }
 
-const comparativa = [
-  { name: "Maxipesca (propia)", anio1: 900, anio3: 900 },
-  { name: "Salesforce CRM Essentials", anio1: 1800, anio3: 5400 },
-  { name: "SAP Business One", anio1: 5000, anio3: 15000 },
-];
+  const data = [
+    { name: "Maxipesca (propia)", anio1: 900, anio3: 900 },
+    { name: "Salesforce CRM Essentials", anio1: 1800, anio3: 5400 },
+    { name: "SAP Business One", anio1: 5000, anio3: 15000 }
+  ];
+  const bw = 34, gap = 8;
+  const groupW = bw * 2 + gap;
+  const slot = (W - padL - padR) / 3;
 
-const escenarios = [
-  { metrica: "Beneficio mensual", base: "US$ 1.140", pess: "US$ 570" },
-  { metrica: "Payback period", base: "24 días", pess: "47 días" },
-  { metrica: "ROI a 12 meses", base: "1.420%", pess: "660%" },
-  { metrica: "Retorno neto año 1", base: "US$ 12.780", pess: "US$ 5.940" },
-];
-
-/* ---------- UI helpers ---------- */
-
-const panel = "rounded-xl border border-[#3b3a3a] bg-[#2f2e2e] p-5";
-const panelTitle = "text-[13px] font-semibold uppercase tracking-wider text-[#f2c811]";
-const panelSub = "text-[11px] text-[#9b9a9a] mt-0.5";
-
-const tooltipStyle = {
-  contentStyle: {
-    background: "#1b1a1a",
-    border: "1px solid #4a4949",
-    borderRadius: 8,
-    color: "#f5f5f5",
-    fontSize: 12,
-  },
-  labelStyle: { color: "#f2c811", fontWeight: 600 },
-};
-
-/* ---------- App ---------- */
-
-export default function App() {
-  return (
-    <div className="min-h-screen bg-[#252424] px-6 py-6 font-sans text-[#e8e6e6]">
-      <div className="mx-auto max-w-7xl space-y-5">
-
-        {/* Header estilo Power BI */}
-        <div className="flex flex-col gap-3 rounded-xl border border-[#3b3a3a] bg-[#2f2e2e] p-5 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f2c811] text-xl font-black text-[#252424]">
-              M
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white">
-                Maxipesca C.A. · ROI Plataforma Salesforce
-              </h1>
-              <p className="text-[12px] text-[#9b9a9a]">
-                Digitalización de la fuerza de ventas · 3 vendedores · Facturación ≈ US$ 15.000/mes
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-[#f2c811]/15 px-3 py-1 text-[11px] font-semibold text-[#f2c811]">
-              ANÁLISIS EJECUTIVO 2026
-            </span>
-            <span className="rounded-full bg-[#4a4949]/40 px-3 py-1 text-[11px] font-semibold text-[#c9c8c8]">
-              DOCUMENTO INTERNO
-            </span>
-          </div>
-        </div>
-
-        {/* KPI cards */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-          {KPIs.map((k) => (
-            <div key={k.label} className="rounded-xl border border-[#3b3a3a] bg-[#2f2e2e] p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9b9a9a]">
-                  {k.label}
-                </span>
-                <k.Icon className="h-4 w-4" style={{ color: k.accent }} />
-              </div>
-              <div className="mt-2 text-2xl font-bold" style={{ color: k.accent }}>
-                {k.value}
-              </div>
-              <div className="mt-1 text-[10px] text-[#9b9a9a]">{k.sub}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Fila principal: acumulado + composición */}
-        <div className="grid gap-5 lg:grid-cols-3">
-          <div className={`${panel} lg:col-span-2`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className={panelTitle}>Excedente operativo acumulado vs. inversión</h2>
-                <p className={panelSub}>
-                  Línea de tiempo del retorno · Base: US$ 1.140/mes · Pesimista (50% adopción): US$ 570/mes
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={acumulado} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gBase" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f2c811" stopOpacity={0.45} />
-                      <stop offset="100%" stopColor="#f2c811" stopOpacity={0.03} />
-                    </linearGradient>
-                    <linearGradient id="gPes" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00a4ef" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#00a4ef" stopOpacity={0.03} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="#4a4949" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="mes" stroke="#9b9a9a" fontSize={11} tickLine={false} />
-                  <YAxis
-                    stroke="#9b9a9a"
-                    fontSize={11}
-                    tickLine={false}
-                    tickFormatter={(v) => (v === 0 ? "0" : (v / 1000) + "k")}
-                  />
-                  <Tooltip
-                    {...tooltipStyle}
-                    formatter={(v, name) => [
-                      usd(v),
-                      name === "base" ? "Escenario base" : "Pesimista (50%)",
-                    ]}
-                  />
-                  <Legend
-                    formatter={(v) => (v === "base" ? "Escenario base" : "Pesimista (50%)")}
-                    wrapperStyle={{ fontSize: 12, color: "#c9c8c8" }}
-                  />
-                  <ReferenceLine
-                    y={900}
-                    stroke="#7fba00"
-                    strokeDasharray="6 4"
-                    label={{
-                      value: "Inversión US$ 900 · break-even día 24",
-                      position: "insideTopRight",
-                      fill: "#7fba00",
-                      fontSize: 11,
-                    }}
-                  />
-                  <Area type="monotone" dataKey="pesimista" stroke="#00a4ef" strokeWidth={2} fill="url(#gPes)" />
-                  <Area type="monotone" dataKey="base" stroke="#f2c811" strokeWidth={2.5} fill="url(#gBase)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className={panel}>
-            <h2 className={panelTitle}>Composición del beneficio mensual</h2>
-            <p className={panelSub}>US$ 1.140 generados cada mes</p>
-            <div className="mt-2 h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={composicion}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius="55%"
-                    outerRadius="80%"
-                    paddingAngle={3}
-                    stroke="#252424"
-                  >
-                    <Cell fill="#f2c811" />
-                    <Cell fill="#00a4ef" />
-                  </Pie>
-                  <Tooltip {...tooltipStyle} formatter={(v) => usd(v)} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-2">
-              {composicion.map((c, i) => (
-                <div key={c.name} className="flex items-center justify-between text-[12px]">
-                  <span className="flex items-center gap-2 text-[#c9c8c8]">
-                    <span
-                      className="h-2.5 w-2.5 rounded-sm"
-                      style={{ background: i === 0 ? "#f2c811" : "#00a4ef" }}
-                    />
-                    {c.name}
-                  </span>
-                  <span className="font-semibold text-white">
-                    {usd(c.value)}{" "}
-                    <span className="text-[#9b9a9a]">
-                      ({Math.round((c.value / 1140) * 100)}%)
-                    </span>
-                  </span>
-                </div>
-              ))}
-              <div className="flex items-center justify-between border-t border-[#3b3a3a] pt-2 text-[12px]">
-                <span className="font-semibold text-[#f2c811]">Total mensual</span>
-                <span className="font-bold text-white">US$ 1.140</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Fila 2: desglose por concepto */}
-        <div className="grid gap-5 lg:grid-cols-2">
-          <div className={panel}>
-            <h2 className={panelTitle}>Ahorros directos por concepto</h2>
-            <p className={panelSub}>Subtotal: US$ 440 / mes</p>
-            <div className="mt-4 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ahorros} layout="vertical" margin={{ left: 10, right: 20 }}>
-                  <CartesianGrid stroke="#4a4949" strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" stroke="#9b9a9a" fontSize={11} tickLine={false} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    stroke="#9b9a9a"
-                    fontSize={10}
-                    width={155}
-                    tickLine={false}
-                  />
-                  <Tooltip {...tooltipStyle} formatter={(v) => [usd(v) + " / mes", "Ahorro"]} />
-                  <Bar dataKey="value" fill="#f2c811" radius={[0, 4, 4, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className={panel}>
-            <h2 className={panelTitle}>Incremento de ingresos por concepto</h2>
-            <p className={panelSub}>Subtotal: US$ 700 / mes</p>
-            <div className="mt-4 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ingresos} layout="vertical" margin={{ left: 10, right: 20 }}>
-                  <CartesianGrid stroke="#4a4949" strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" stroke="#9b9a9a" fontSize={11} tickLine={false} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    stroke="#9b9a9a"
-                    fontSize={10}
-                    width={155}
-                    tickLine={false}
-                  />
-                  <Tooltip {...tooltipStyle} formatter={(v) => [usd(v) + " / mes", "Incremento"]} />
-                  <Bar dataKey="value" fill="#00a4ef" radius={[0, 4, 4, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        {/* Fila 3: comparativa mercado + escenario pesimista */}
-        <div className="grid gap-5 lg:grid-cols-3">
-          <div className={`${panel} lg:col-span-2`}>
-            <h2 className={panelTitle}>Comparativa de costos vs. alternativas comerciales</h2>
-            <p className={panelSub}>
-              A 3 años: Maxipesca US$ 900 · Salesforce US$ 5.400 · SAP US$ 15.000+ → 6× más económica
-            </p>
-            <div className="mt-4 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={comparativa} margin={{ top: 5, right: 10, left: 0 }}>
-                  <CartesianGrid stroke="#4a4949" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" stroke="#9b9a9a" fontSize={11} tickLine={false} />
-                  <YAxis
-                    stroke="#9b9a9a"
-                    fontSize={11}
-                    tickLine={false}
-                    tickFormatter={(v) => (v === 0 ? "0" : (v / 1000) + "k")}
-                  />
-                  <Tooltip {...tooltipStyle} formatter={(v, name) => [usd(v), name === "anio1" ? "Año 1" : "3 años"]} />
-                  <Legend
-                    formatter={(v) => (v === "anio1" ? "Año 1" : "A 3 años")}
-                    wrapperStyle={{ fontSize: 12, color: "#c9c8c8" }}
-                  />
-                  <Bar dataKey="anio1" fill="#f2c811" radius={[4, 4, 0, 0]} barSize={28} />
-                  <Bar dataKey="anio3" fill="#e8a33d" radius={[4, 4, 0, 0]} barSize={28} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className={panel}>
-            <h2 className={panelTitle}>Escenario base vs. pesimista</h2>
-            <p className={panelSub}>Supuesto: solo 50% de adopción de la app</p>
-            <div className="mt-4 overflow-hidden rounded-lg border border-[#3b3a3a]">
-              <table className="w-full text-[12px]">
-                <thead>
-                  <tr className="bg-[#373636] text-[#9b9a9a]">
-                    <th className="px-3 py-2 text-left font-semibold">Métrica</th>
-                    <th className="px-3 py-2 text-right font-semibold text-[#f2c811]">Base</th>
-                    <th className="px-3 py-2 text-right font-semibold text-[#00a4ef]">Pesim.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {escenarios.map((e, i) => (
-                    <tr key={e.metrica} className={i % 2 === 0 ? "bg-[#2f2e2e]" : "bg-[#2b2a2a]"}>
-                      <td className="px-3 py-2 text-[#c9c8c8]">{e.metrica}</td>
-                      <td className="px-3 py-2 text-right font-semibold text-white">{e.base}</td>
-                      <td className="px-3 py-2 text-right font-semibold text-[#9fd8f5]">{e.pess}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-4 rounded-lg bg-[#7fba00]/10 p-3 text-[11px] leading-relaxed text-[#b9d98a]">
-              Incluso con 50% de adopción, el ROI anual es 660%. No existe un
-              escenario razonable donde esta inversión pierda dinero.
-            </p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex flex-col gap-2 rounded-xl border border-[#3b3a3a] bg-[#2f2e2e] p-4 text-[11px] text-[#9b9a9a] md:flex-row md:items-center md:justify-between">
-          <span>
-            Fuente: análisis ejecutivo ROI Maxipesca C.A. · Proyección con margen de
-            seguridad del 50% · Costos recurrentes: US$ 0/mes (Server: Vercel, Database: Supabase
-            PostgreSQL, MontosVE "Proveedor de data tiempo real BCV)
-          </span>
-          <span className="font-semibold text-[#f2c811]">
-            US$ 1 invertido regresa como US$ 14,20
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+  data.forEach((d, i) => {
+    const cx = padL + slot * i + slot / 2;
+    const x1 = cx - groupW / 2, x3 = x1 + bw + gap;
+    [[x1, d.anio1, "#f2c811", "Año 1"], [x3, d.anio3, "#e8a33d", "3 años"]].forEach(([x, v, c, serie]) => {
+      const g = el("g", { class: "bar" }, svg);
+      const r = el("rect", { x: x, y: Y(v), width: bw, height: Y(0) - Y(v), rx: 5, fill: c }, g);
+      const t = document.createElementNS(NS, "title");
+      t.textContent = d.name + " · " + serie + ": " + usd(v);
+      r.appendChild(t);
+      const lbl = v >= 1000 ? (v / 1000).toString().replace(".", ",") + "k" : String(v);
+      el("text", { x: x + bw / 2, y: Y(v) - 6, "text-anchor": "middle", "font-size": 10, fill: "#fff", "font-weight": 600, _txt: lbl }, svg);
+    });
+    el("text", { x: cx, y: H - 9, "text-anchor": "middle", "font-size": 11, fill: GRAY, _txt: d.name }, svg);
+  });
+})();
+</script>
+</body>
+</html>
