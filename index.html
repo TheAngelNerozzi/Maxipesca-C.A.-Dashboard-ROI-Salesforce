@@ -95,6 +95,20 @@
   }
   .sbtn:hover { border-color: #f2c811; color: #fff; }
   .sbtn.active { background: #f2c811; border-color: #f2c811; color: #252424; }
+
+  /* Stepper de vendedores */
+  .grp { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .glbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #9b9a9a; }
+  .sep { width: 1px; height: 32px; background: #3b3a3a; }
+  .stepper { display: flex; align-items: center; border: 1px solid #4a4949; background: #373636; border-radius: 10px; overflow: hidden; }
+  .stepper button { width: 34px; height: 34px; font-size: 17px; font-weight: 700; color: #c9c8c8; background: transparent; border: none; cursor: pointer; transition: background .15s, color .15s; }
+  .stepper button:hover { background: #4a4949; color: #fff; }
+  .stepper input { width: 48px; background: transparent; border: none; text-align: center; font-size: 16px; font-weight: 800; color: #f2c811; outline: none; appearance: textfield; -moz-appearance: textfield; }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .vchip { font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #373636; color: #c9c8c8; border: 1px solid #4a4949; cursor: pointer; transition: all .15s; }
+  .vchip:hover { border-color: #f2c811; color: #fff; }
+  .vchip.active { background: #f2c811; border-color: #f2c811; color: #252424; }
+  @media (max-width: 620px) { .sep { display: none; } }
   input[type="range"] { width: 210px; accent-color: #f2c811; cursor: pointer; }
   .sval { font-size: 12px; color: #9b9a9a; min-width: 92px; }
   .sval b { color: #f2c811; font-size: 15px; font-weight: 800; }
@@ -141,7 +155,7 @@
       <div class="logo">M</div>
       <div>
         <h1>Maxipesca C.A. · ROI Plataforma Salesforce</h1>
-        <p>Digitalización de la fuerza de ventas · 3 vendedores · Facturación ≈ US$ 15.000/mes</p>
+        <p id="hdrSub">Digitalización de la fuerza de ventas · 3 vendedores · Facturación ≈ US$ 15.000/mes</p>
       </div>
     </div>
     <div class="chips">
@@ -153,17 +167,31 @@
   <!-- KPI CARDS -->
   <div class="kpis" id="kpis"></div>
 
-  <!-- SLICER DE ESCENARIO -->
+  <!-- CALCULADORA: VENDEDORES + ADOPCIÓN -->
   <div class="panel slicer">
     <div>
-      <h2 class="ptitle">Slicer de escenario · % de adopción</h2>
-      <p class="psub">¿Qué porcentaje de los beneficios proyectados se materializa? Mueve el control para simular escenarios.</p>
+      <h2 class="ptitle">Calculadora de ROI · Vendedores y adopción</h2>
+      <p class="psub">El beneficio escala linealmente: US$ 380/mes por vendedor · La inversión se mantiene fija en US$ 900 · Ambos controles recalculan el dashboard en vivo</p>
     </div>
     <div class="slicer-body">
-      <button class="sbtn active" data-p="1">Base · 100%</button>
-      <button class="sbtn" data-p="0.5">Pesimista · 50%</button>
-      <input type="range" id="adoption" min="10" max="100" step="5" value="100" aria-label="Nivel de adopción" />
-      <span class="sval"><b id="pVal">100%</b> adopción</span>
+      <div class="grp">
+        <span class="glbl">Vendedores</span>
+        <div class="stepper">
+          <button type="button" id="vMinus" aria-label="Menos vendedores">−</button>
+          <input type="number" id="vInput" min="1" max="20" value="3" aria-label="Número de vendedores" />
+          <button type="button" id="vPlus" aria-label="Más vendedores">+</button>
+        </div>
+        <div class="grp" id="vChips"></div>
+      </div>
+      <span class="sep"></span>
+      <div class="grp">
+        <span class="glbl">Adopción</span>
+        <button class="sbtn active" data-p="1">Base · 100%</button>
+        <button class="sbtn" data-p="0.5">Pesimista · 50%</button>
+        <input type="range" id="adoption" min="10" max="100" step="5" value="100" aria-label="Nivel de adopción" />
+        <span class="sval"><b id="pVal">100%</b> adopción</span>
+      </div>
+      <span class="sval" id="sumChip">Facturación ≈ <b>US$ 15.000</b>/mes · Beneficio <b>US$ 1.140</b>/mes</span>
     </div>
   </div>
 
@@ -171,7 +199,7 @@
   <div class="row">
     <div class="panel c2">
       <h2 class="ptitle">Excedente operativo acumulado vs. inversión</h2>
-      <p class="psub">Línea de tiempo del retorno · Plan base: US$ 1.140/mes · La línea azul sigue el slicer · Pasa el cursor para ver el detalle</p>
+      <p class="psub" id="areaSub">Línea de tiempo del retorno · Plan base: US$ 1.140/mes · La línea azul sigue el simulador · Pasa el cursor para ver el detalle</p>
       <div class="legend">
         <span><i class="dot" style="background:#f2c811"></i> Plan base (100%)</span>
         <span><i class="dot" style="background:#00a4ef"></i><span id="legActive"> Escenario activo (100%)</span></span>
@@ -182,15 +210,15 @@
 
     <div class="panel">
       <h2 class="ptitle">Composición del beneficio mensual</h2>
-      <p class="psub">US$ 1.140 generados cada mes</p>
+      <p class="psub" id="donutSub">US$ 1.140 generados cada mes</p>
       <div class="donut-wrap">
         <svg viewBox="0 0 200 200" width="170" height="170" id="donut"></svg>
-        <div class="donut-center"><b>US$ 1.140</b><small>por mes</small></div>
+        <div class="donut-center"><b id="donutTotal">US$ 1.140</b><small>por mes</small></div>
       </div>
       <div class="dlegend">
-        <div class="r"><span><i class="dot" style="background:#f2c811"></i> Ahorros directos</span><b>US$ 440 <small>(38,6%)</small></b></div>
-        <div class="r"><span><i class="dot" style="background:#00a4ef"></i> Incremento de ingresos</span><b>US$ 700 <small>(61,4%)</small></b></div>
-        <div class="r total"><span>Total mensual</span><b>US$ 1.140</b></div>
+        <div class="r"><span><i class="dot" style="background:#f2c811"></i> Ahorros directos</span><b id="donutA">US$ 440 <small>(38,6%)</small></b></div>
+        <div class="r"><span><i class="dot" style="background:#00a4ef"></i> Incremento de ingresos</span><b id="donutI">US$ 700 <small>(61,4%)</small></b></div>
+        <div class="r total"><span>Total mensual</span><b id="donutTotalRow">US$ 1.140</b></div>
       </div>
     </div>
   </div>
@@ -199,12 +227,12 @@
   <div class="row">
     <div class="panel">
       <h2 class="ptitle">Ahorros directos por concepto</h2>
-      <p class="psub">Subtotal: US$ 440 / mes</p>
+      <p class="psub" id="aSub">Subtotal: US$ 440 / mes</p>
       <svg class="chart" id="ahorrosChart" viewBox="0 0 760 232" role="img" aria-label="Ahorros por concepto"></svg>
     </div>
     <div class="panel">
       <h2 class="ptitle">Incremento de ingresos por concepto</h2>
-      <p class="psub">Subtotal: US$ 700 / mes</p>
+      <p class="psub" id="iSub">Subtotal: US$ 700 / mes</p>
       <svg class="chart" id="ingresosChart" viewBox="0 0 760 130" role="img" aria-label="Ingresos por concepto"></svg>
     </div>
   </div>
@@ -223,14 +251,14 @@
 
     <div class="panel">
       <h2 class="ptitle">Escenario base vs. simulación</h2>
-      <p class="psub">La columna derecha responde al slicer superior · Referencia del documento: pesimista = 50% adopción</p>
+      <p class="psub">Ambas columnas responden a la calculadora superior · Referencia del documento: pesimista = 50% adopción</p>
       <table>
-        <thead><tr><th>Métrica</th><th class="r y">Base</th><th class="r b" id="thSim">Simul. (100%)</th></tr></thead>
+        <thead><tr><th>Métrica</th><th class="r y" id="thBase">Base (100%)</th><th class="r b" id="thSim">Simul. (100%)</th></tr></thead>
         <tbody>
-          <tr><td>Beneficio mensual</td><td class="r"><b>US$ 1.140</b></td><td class="r pb" id="simMes">US$ 1.140</td></tr>
-          <tr><td>Payback period</td><td class="r"><b>24 días</b></td><td class="r pb" id="simPay">24 días</td></tr>
-          <tr><td>ROI a 12 meses</td><td class="r"><b>1.420%</b></td><td class="r pb" id="simRoi">1.420%</td></tr>
-          <tr><td>Retorno neto año 1</td><td class="r"><b>US$ 12.780</b></td><td class="r pb" id="simNet">US$ 12.780</td></tr>
+          <tr><td>Beneficio mensual</td><td class="r"><b id="baseMes">US$ 1.140</b></td><td class="r pb" id="simMes">US$ 1.140</td></tr>
+          <tr><td>Payback period</td><td class="r"><b id="basePay">24 días</b></td><td class="r pb" id="simPay">24 días</td></tr>
+          <tr><td>ROI a 12 meses</td><td class="r"><b id="baseRoi">1.420%</b></td><td class="r pb" id="simRoi">1.420%</td></tr>
+          <tr><td>Retorno neto año 1</td><td class="r"><b id="baseNet">US$ 12.780</b></td><td class="r pb" id="simNet">US$ 12.780</td></tr>
         </tbody>
       </table>
       <p class="note" id="simNote">Con 100% de adopción, el ROI anual es de <b>1.420%</b>. No existe un escenario razonable donde esta inversión pierda dinero.</p>
@@ -240,7 +268,7 @@
   <!-- FOOTER -->
   <div class="panel footer">
     <span>Fuente: análisis ejecutivo ROI Maxipesca C.A. · Proyección con margen de seguridad del 50% · Costos recurrentes: US$ 0/mes (Server: Vercel, Database: Supabase PostgreSQL, MontosVE "Proveedor de data tiempo real BCV")</span>
-    <b>US$ 1 invertido regresa como US$ 14,20</b>
+    <b id="verdict">US$ 1 invertido regresa como US$ 14,20</b>
   </div>
 </div>
 
@@ -270,7 +298,7 @@ const ICONS = {
 };
 
 /* ---------- KPIs ---------- */
-const INVERSION = 900, PLAN_MES = 1140;
+const INVERSION = 900, POR_VENDEDOR = 380, FACT_VENDEDOR = 5000, V_BASE = 3;
 
 const KPIS = [
   { key: "inversion", label: "Inversión inicial", value: "US$ 900", sub: "Pago único · Sin recurrentes", icon: "dollar", color: "#f2c811" },
@@ -298,7 +326,7 @@ KPIS.forEach(k => {
 
 /* ---------- Métricas del escenario ---------- */
 function metrics(p) {
-  const mes = PLAN_MES * p;
+  const mes = POR_VENDEDOR * V * p;
   const anual = mes * 12;
   const roi = (anual - INVERSION) / INVERSION * 100;
   return {
@@ -348,20 +376,32 @@ document.addEventListener("mousemove", e => {
 
 let updateAreaFn = null;
 let P = 1;
+let V = V_BASE;
 
-/* ---------- GRÁFICO DE ÁREA: ACUMULADO ---------- */
+/* ---------- GRÁFICO DE ÁREA: ACUMULADO (eje auto-escalable) ---------- */
 (function () {
   const svg = document.getElementById("areaChart");
-  const W = 760, H = 310, padL = 46, padR = 14, padT = 18, padB = 32;
-  const maxY = 14000, N = 12;
+  const W = 760, H = 310, padL = 46, padR = 14, padT = 18, padB = 32, N = 12;
   const X = i => padL + (i * (W - padL - padR) / N);
+  let maxY = 14000;
   const Y = v => padT + (1 - v / maxY) * (H - padT - padB);
 
-  // grid + eje Y
-  for (let v = 0; v <= 14000; v += 2000) {
-    el("line", { x1: padL, y1: Y(v), x2: W - padR, y2: Y(v), stroke: GRID, "stroke-dasharray": "3 3" }, svg);
-    el("text", { x: padL - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 11, fill: GRAY, _txt: v === 0 ? "0" : (v / 1000) + "k" }, svg);
+  function gridStep(span) {
+    const cands = [1000, 2000, 2500, 4000, 5000, 10000, 20000, 25000, 50000, 100000];
+    for (let i = 0; i < cands.length; i++) if (span / cands[i] <= 7.5) return cands[i];
+    return 200000;
   }
+
+  // grid + eje Y (re-renderizable según escala)
+  const gridG = el("g", {}, svg);
+  function renderGrid() {
+    while (gridG.firstChild) gridG.removeChild(gridG.firstChild);
+    for (let v = 0; v <= maxY; v += gridStep(maxY)) {
+      el("line", { x1: padL, y1: Y(v), x2: W - padR, y2: Y(v), stroke: GRID, "stroke-dasharray": "3 3" }, gridG);
+      el("text", { x: padL - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 11, fill: GRAY, _txt: v === 0 ? "0" : (v / 1000) + "k" }, gridG);
+    }
+  }
+
   // eje X
   for (let i = 0; i <= N; i++) {
     el("text", { x: X(i), y: H - 10, "text-anchor": "middle", "font-size": 11, fill: GRAY, _txt: i === 0 ? "Día 0" : "M" + i }, svg);
@@ -375,20 +415,19 @@ let P = 1;
     el("stop", { offset: "100%", "stop-color": pair[1], "stop-opacity": 0.03 }, g);
   });
 
-  const baseVals = Array.from({ length: 13 }, (_, m) => PLAN_MES * m);
-  let actVals = baseVals.slice();
+  let baseVals = [], actVals = [];
   const pathOf = vals => vals.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join(" ");
   const fillOf = vals => pathOf(vals) + " L" + X(N).toFixed(1) + " " + Y(0).toFixed(1) + " L" + X(0).toFixed(1) + " " + Y(0).toFixed(1) + " Z";
 
   // escenario activo (azul) debajo, plan base (amarillo) encima
-  const actFill = el("path", { d: fillOf(actVals), fill: "url(#gAct)", stroke: "none" }, svg);
-  const actLine = el("path", { d: pathOf(actVals), fill: "none", stroke: "#00a4ef", "stroke-width": 2.2 }, svg);
-  el("path", { d: fillOf(baseVals), fill: "url(#gBase)", stroke: "none" }, svg);
-  el("path", { d: pathOf(baseVals), fill: "none", stroke: "#f2c811", "stroke-width": 2.6 }, svg);
+  const actFill = el("path", { d: "", fill: "url(#gAct)", stroke: "none" }, svg);
+  const actLine = el("path", { d: "", fill: "none", stroke: "#00a4ef", "stroke-width": 2.2 }, svg);
+  const baseFill = el("path", { d: "", fill: "url(#gBase)", stroke: "none" }, svg);
+  const baseLine = el("path", { d: "", fill: "none", stroke: "#f2c811", "stroke-width": 2.6 }, svg);
 
-  // línea de referencia: inversión
-  el("line", { x1: padL, y1: Y(INVERSION), x2: W - padR, y2: Y(INVERSION), stroke: "#7fba00", "stroke-dasharray": "6 4", "stroke-width": 1.5 }, svg);
-  el("text", { x: W - padR - 4, y: Y(INVERSION) + 16, "text-anchor": "end", "font-size": 11, fill: "#7fba00", _txt: "Inversión US$ 900 · break-even día 24" }, svg);
+  // línea de referencia: inversión (posición dinámica)
+  const refLine = el("line", { x1: padL, x2: W - padR, stroke: "#7fba00", "stroke-dasharray": "6 4", "stroke-width": 1.5 }, svg);
+  const refLbl = el("text", { x: W - padR - 4, "text-anchor": "end", "font-size": 11, fill: "#7fba00" }, svg);
 
   // crosshair
   const ch = el("g", { opacity: 0, "pointer-events": "none" }, svg);
@@ -396,12 +435,25 @@ let P = 1;
   const chBase = el("circle", { r: 4.5, fill: "#f2c811", stroke: "#252424", "stroke-width": 1.5 }, ch);
   const chAct = el("circle", { r: 4.5, fill: "#00a4ef", stroke: "#252424", "stroke-width": 1.5 }, ch);
 
-  updateAreaFn = p => {
-    actVals = Array.from({ length: 13 }, (_, m) => PLAN_MES * p * m);
+  updateAreaFn = () => {
+    const baseMes = POR_VENDEDOR * V;
+    baseVals = Array.from({ length: 13 }, (_, m) => baseMes * m);
+    actVals = Array.from({ length: 13 }, (_, m) => baseMes * P * m);
+    const target = Math.max(baseVals[12], 14000);
+    const step = gridStep(target);
+    maxY = Math.ceil(target / step) * step;
+    renderGrid();
     actLine.setAttribute("d", pathOf(actVals));
     actFill.setAttribute("d", fillOf(actVals));
+    baseLine.setAttribute("d", pathOf(baseVals));
+    baseFill.setAttribute("d", fillOf(baseVals));
+    refLine.setAttribute("y1", Y(INVERSION));
+    refLine.setAttribute("y2", Y(INVERSION));
+    refLbl.setAttribute("y", Y(INVERSION) + 16);
+    refLbl.textContent = "Inversión US$ 900 · break-even día " + Math.round(INVERSION / (baseMes * P) * 30);
     if (ch.getAttribute("opacity") === "1") {
       const i = Math.round((parseFloat(chBase.getAttribute("cx")) - padL) / ((W - padL - padR) / N));
+      chBase.setAttribute("cy", Y(baseVals[i]));
       chAct.setAttribute("cy", Y(actVals[i]));
     }
   };
@@ -418,7 +470,7 @@ let P = 1;
     chAct.setAttribute("cx", x); chAct.setAttribute("cy", Y(actVals[i]));
     showTip(
       "<b>" + (i === 0 ? "Día 0 · lanzamiento" : "Mes " + i) + "</b>" +
-      "<div class='tr'><i style='background:#f2c811'></i><em>Plan base</em><span>" + usd(baseVals[i]) + "</span></div>" +
+      "<div class='tr'><i style='background:#f2c811'></i><em>Plan base (100%)</em><span>" + usd(baseVals[i]) + "</span></div>" +
       "<div class='tr'><i style='background:#00a4ef'></i><em>Escenario (" + Math.round(P * 100) + "%)</em><span>" + usd(actVals[i]) + "</span></div>" +
       "<div class='tr'><i style='background:#7fba00'></i><em>Inversión</em><span>US$ 900</span></div>" +
       (i > 0 ? "<div class='tr net'><em>Neto vs. inversión</em><span>" + usd(actVals[i] - INVERSION) + "</span></div>" : ""),
@@ -428,31 +480,38 @@ let P = 1;
   svg.addEventListener("mouseleave", () => { ch.setAttribute("opacity", 0); hideTip(); });
 })();
 
-/* ---------- DONUT ---------- */
-(function () {
+/* ---------- DONUT (re-renderizable) ---------- */
+function renderDonut() {
   const svg = document.getElementById("donut");
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
   const C = 2 * Math.PI * 70;
   const pA = 440 / 1140;
+  const esc = (V / V_BASE) * P;
+  const aV = Math.round(440 * esc), iV = Math.round(700 * esc);
   el("circle", { cx: 100, cy: 100, r: 70, fill: "none", stroke: "#373636", "stroke-width": 22 }, svg);
   el("circle", {
     cx: 100, cy: 100, r: 70, fill: "none", stroke: "#f2c811", "stroke-width": 22, class: "seg",
     "stroke-dasharray": (pA * C) + " " + C, transform: "rotate(-90 100 100)",
-    "data-tip": "<b>Ahorros directos</b><div class='tr'><i style='background:#f2c811'></i><em>38,6% del beneficio</em><span>US$ 440 / mes</span></div>"
+    "data-tip": "<b>Ahorros directos</b><div class='tr'><i style='background:#f2c811'></i><em>38,6% del beneficio</em><span>" + usd(aV) + " / mes</span></div>"
   }, svg);
   el("circle", {
     cx: 100, cy: 100, r: 70, fill: "none", stroke: "#00a4ef", "stroke-width": 22, class: "seg",
     "stroke-dasharray": ((1 - pA) * C) + " " + C, "stroke-dashoffset": (-pA * C), transform: "rotate(-90 100 100)",
-    "data-tip": "<b>Incremento de ingresos</b><div class='tr'><i style='background:#00a4ef'></i><em>61,4% del beneficio</em><span>US$ 700 / mes</span></div>"
+    "data-tip": "<b>Incremento de ingresos</b><div class='tr'><i style='background:#00a4ef'></i><em>61,4% del beneficio</em><span>" + usd(iV) + " / mes</span></div>"
   }, svg);
-})();
+  document.getElementById("donutA").innerHTML = usd(aV) + " <small>(38,6%)</small>";
+  document.getElementById("donutI").innerHTML = usd(iV) + " <small>(61,4%)</small>";
+}
 
-/* ---------- BARRAS HORIZONTALES ---------- */
-function hbars(svgId, data, color, rowH, tipLabel) {
+/* ---------- BARRAS HORIZONTALES (re-renderizables y escalables) ---------- */
+function hbars(svgId, data, color, rowH, tipLabel, scale) {
   const svg = document.getElementById(svgId);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const scaled = data.map(d => ({ name: d.name, value: Math.round(d.value * scale) }));
   const W = 760, labelW = 172, padR = 60;
-  const maxV = Math.max(...data.map(d => d.value));
+  const maxV = Math.max(...scaled.map(d => d.value));
   const barArea = W - labelW - padR;
-  data.forEach((d, i) => {
+  scaled.forEach((d, i) => {
     const y = i * rowH + 6, h = Math.min(18, rowH - 10);
     el("text", { x: 0, y: y + h / 2 + 4, "font-size": 11, fill: GRAY, _txt: d.name }, svg);
     const g = el("g", { class: "bar" }, svg);
@@ -477,8 +536,6 @@ const ingresos = [
   { name: "Conversión prospectos (push)", value: 250 },
   { name: "Aprobación rápida de ventas", value: 150 }
 ];
-hbars("ahorrosChart", ahorros, "#f2c811", 36, "Ahorro mensual");
-hbars("ingresosChart", ingresos, "#00a4ef", 36, "Incremento mensual");
 
 /* ---------- COMPARATIVA BARRAS AGRUPADAS ---------- */
 (function () {
@@ -517,19 +574,53 @@ hbars("ingresosChart", ingresos, "#00a4ef", 36, "Incremento mensual");
   });
 })();
 
-/* ---------- SLICER DE ESCENARIO ---------- */
+/* ---------- CALCULADORA: VENDEDORES + ADOPCIÓN ---------- */
 const slider = document.getElementById("adoption");
 const pVal = document.getElementById("pVal");
 const sbtns = document.querySelectorAll(".sbtn");
+const vInput = document.getElementById("vInput");
+const vChips = document.getElementById("vChips");
 
-function applyScenario(p) {
+[1, 3, 5, 10, 20].forEach(n => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "vchip";
+  b.textContent = n;
+  b.addEventListener("click", () => setV(n));
+  vChips.appendChild(b);
+});
+const vchips = document.querySelectorAll(".vchip");
+
+function setV(v) {
+  V = Math.min(20, Math.max(1, Math.round(v) || 1));
+  applyModel();
+}
+function setP(p) {
   P = Math.min(1, Math.max(0.1, p));
-  const m = metrics(P), pct = Math.round(P * 100);
+  applyModel();
+}
+
+function applyModel() {
+  const m = metrics(P);   // escenario activo
+  const mb = metrics(1);  // plan base (100% adopción)
+  const pct = Math.round(P * 100);
+  const esc = (V / V_BASE) * P;
+
+  // controles
   pVal.textContent = pct + "%";
   slider.value = String(pct);
+  vInput.value = String(V);
   sbtns.forEach(b => b.classList.toggle("active", Math.abs(parseFloat(b.dataset.p) - P) < 0.001));
+  vchips.forEach(b => b.classList.toggle("active", parseInt(b.textContent, 10) === V));
 
-  // KPIs animados
+  // resumen del simulador + header
+  document.getElementById("sumChip").innerHTML =
+    "Facturación ≈ <b>US$ " + fmtInt(FACT_VENDEDOR * V) + "</b>/mes · Beneficio <b>US$ " + fmtInt(m.mes) + "</b>/mes";
+  document.getElementById("hdrSub").textContent =
+    "Digitalización de la fuerza de ventas · " + V + (V === 1 ? " vendedor" : " vendedores") +
+    " · Facturación ≈ US$ " + fmtInt(FACT_VENDEDOR * V) + "/mes";
+
+  // KPIs animados (escenario activo)
   tween("roi", m.roi, v => fmtPct(v));
   kpiSubs.roi.textContent = fmtDec(m.ratio, 1) + "× la inversión";
   tween("payback", m.dias, v => fmtInt(v) + " días");
@@ -537,27 +628,60 @@ function applyScenario(p) {
   tween("ratio", m.ratio, v => fmtDec(v, 2) + "×");
   kpiSubs.ratio.textContent = "Cada US$ 1 → US$ " + fmtDec(m.ratio, 2);
   tween("mes", m.mes, v => "US$ " + fmtInt(v));
-  kpiSubs.mes.textContent = "Ahorros + ingresos · " + pct + "% adopción";
+  kpiSubs.mes.textContent = "Ahorros + ingresos · " + V + " vend. · " + pct + "% adopción";
   tween("neto", m.neto, v => "US$ " + fmtInt(v));
 
-  // leyenda del gráfico de área
+  // gráfico de área
+  document.getElementById("areaSub").textContent =
+    "Línea de tiempo del retorno · Plan base: " + usd(mb.mes) + "/mes · Escenario activo: " + usd(m.mes) + "/mes · Pasa el cursor para ver el detalle";
   document.getElementById("legActive").textContent = " Escenario activo (" + pct + "%)";
   document.getElementById("legInv").textContent = " Inversión US$ 900 · break-even día " + m.dias;
-  if (updateAreaFn) updateAreaFn(P);
+  if (updateAreaFn) updateAreaFn();
 
-  // tabla de simulación
+  // donut + barras por concepto (escalan con vendedores × adopción)
+  document.getElementById("donutSub").textContent = usd(m.mes) + " generados cada mes";
+  document.getElementById("donutTotal").textContent = usd(m.mes);
+  document.getElementById("donutTotalRow").textContent = usd(m.mes);
+  renderDonut();
+  document.getElementById("aSub").textContent = "Subtotal: " + usd(440 * esc) + " / mes";
+  document.getElementById("iSub").textContent = "Subtotal: " + usd(700 * esc) + " / mes";
+  hbars("ahorrosChart", ahorros, "#f2c811", 36, "Ahorro mensual", esc);
+  hbars("ingresosChart", ingresos, "#00a4ef", 36, "Incremento mensual", esc);
+
+  // tabla base vs simulación
+  document.getElementById("baseMes").textContent = usd(mb.mes);
+  document.getElementById("basePay").textContent = mb.dias + " días";
+  document.getElementById("baseRoi").textContent = fmtPct(mb.roi);
+  document.getElementById("baseNet").textContent = usd(mb.neto);
   document.getElementById("thSim").textContent = "Simul. (" + pct + "%)";
-  document.getElementById("simMes").textContent = "US$ " + fmtInt(m.mes);
+  document.getElementById("simMes").textContent = usd(m.mes);
   document.getElementById("simPay").textContent = m.dias + " días";
   document.getElementById("simRoi").textContent = fmtPct(m.roi);
-  document.getElementById("simNet").textContent = "US$ " + fmtInt(m.neto);
-  document.getElementById("simNote").innerHTML =
-    "Con " + pct + "% de adopción, el ROI anual es de <b>" + fmtPct(m.roi) + "</b>. No existe un escenario razonable donde esta inversión pierda dinero.";
+  document.getElementById("simNet").textContent = usd(m.neto);
+
+  // nota adaptativa
+  const noteEl = document.getElementById("simNote");
+  const vLbl = V + (V === 1 ? " vendedor" : " vendedores");
+  if (m.roi > 0) {
+    noteEl.innerHTML = "Con " + vLbl + " y " + pct + "% de adopción, el ROI anual es de <b>" + fmtPct(m.roi) +
+      "</b>. No existe un escenario razonable donde esta inversión pierda dinero.";
+  } else {
+    noteEl.innerHTML = "Escenario extremo (" + vLbl + " y " + pct + "% de adopción): el primer año cierra con <b>" +
+      fmtPct(m.roi) + "</b>, pero el beneficio sigue acumulándose mes a mes y la inversión se recupera hacia el día <b>" + m.dias + "</b>.";
+  }
+
+  // veredicto
+  document.getElementById("verdict").textContent = m.ratio > 0
+    ? "US$ 1 invertido regresa como US$ " + fmtDec(m.ratio, 2)
+    : "Escenario extremo: la inversión se recupera hacia el día " + m.dias;
 }
 
-sbtns.forEach(b => b.addEventListener("click", () => applyScenario(parseFloat(b.dataset.p))));
-slider.addEventListener("input", () => applyScenario(parseInt(slider.value, 10) / 100));
-applyScenario(1);
+document.getElementById("vMinus").addEventListener("click", () => setV(V - 1));
+document.getElementById("vPlus").addEventListener("click", () => setV(V + 1));
+vInput.addEventListener("change", () => setV(parseInt(vInput.value, 10)));
+sbtns.forEach(b => b.addEventListener("click", () => setP(parseFloat(b.dataset.p))));
+slider.addEventListener("input", () => setP(parseInt(slider.value, 10) / 100));
+applyModel();
 </script>
 </body>
 </html>
