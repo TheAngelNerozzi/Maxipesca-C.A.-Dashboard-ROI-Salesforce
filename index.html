@@ -44,6 +44,7 @@
 
   /* Grid de filas */
   .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .row-2 { grid-template-columns: repeat(2, 1fr); }
   .c2 { grid-column: span 2; }
 
   /* Leyenda */
@@ -144,6 +145,7 @@
   @media (max-width: 1100px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 900px) {
     .row { grid-template-columns: 1fr; }
+    .row-2 { grid-template-columns: 1fr; }
     .c2 { grid-column: auto; }
     .brand h1 { font-size: 16px; }
   }
@@ -233,7 +235,7 @@
   </div>
 
   <!-- FILA 2 -->
-  <div class="row">
+  <div class="row row-2">
     <div class="panel">
       <h2 class="ptitle">Ahorros directos por concepto</h2>
       <p class="psub" id="aSub">Subtotal: US$ 440 / mes</p>
@@ -518,18 +520,18 @@ function hbars(svgId, data, color, rowH, tipLabel, scale) {
   const svg = document.getElementById(svgId);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
   const scaled = data.map(d => ({ name: d.name, value: Math.round(d.value * scale) }));
-  const W = 760, labelW = 210, padR = 74;
+  const W = 760, labelW = 225, padR = 76;
   const maxV = Math.max(...scaled.map(d => d.value));
   const barArea = W - labelW - padR;
   scaled.forEach((d, i) => {
     const y = i * rowH + 8, h = Math.min(24, rowH - 14);
-    el("text", { x: 0, y: y + h / 2 + 5, "font-size": 13.5, fill: "#c9c8c8", _txt: d.name }, svg);
+    el("text", { x: 0, y: y + h / 2 + 5, "font-size": 15, fill: "#c9c8c8", _txt: d.name }, svg);
     const g = el("g", { class: "bar" }, svg);
     el("rect", {
       x: labelW, y: y, width: Math.max(3, (d.value / maxV) * barArea), height: h, rx: 5, fill: color,
       "data-tip": "<b>" + d.name + "</b><div class='tr'><i style='background:" + color + "'></i><em>" + tipLabel + "</em><span>" + usd(d.value) + " / mes</span></div>"
     }, g);
-    el("text", { x: labelW + Math.max(3, (d.value / maxV) * barArea) + 10, y: y + h / 2 + 5, "font-size": 13.5, fill: "#fff", "font-weight": 700, _txt: usd(d.value) }, svg);
+    el("text", { x: labelW + Math.max(3, (d.value / maxV) * barArea) + 10, y: y + h / 2 + 5, "font-size": 15, fill: "#fff", "font-weight": 700, _txt: usd(d.value) }, svg);
   });
 }
 
