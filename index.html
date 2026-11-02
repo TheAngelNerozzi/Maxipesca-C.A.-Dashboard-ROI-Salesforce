@@ -83,6 +83,45 @@
   .footer b { color: #f2c811; }
 
   .bar:hover { opacity: .8; cursor: default; }
+  #areaChart { cursor: crosshair; }
+
+  /* Slicer */
+  .slicer { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .slicer-body { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .sbtn {
+    background: #373636; color: #c9c8c8; border: 1px solid #4a4949; border-radius: 999px;
+    font-size: 12px; font-weight: 600; padding: 8px 16px; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .sbtn:hover { border-color: #f2c811; color: #fff; }
+  .sbtn.active { background: #f2c811; border-color: #f2c811; color: #252424; }
+  input[type="range"] { width: 210px; accent-color: #f2c811; cursor: pointer; }
+  .sval { font-size: 12px; color: #9b9a9a; min-width: 92px; }
+  .sval b { color: #f2c811; font-size: 15px; font-weight: 800; }
+
+  /* Tooltip flotante */
+  #tip {
+    position: fixed; z-index: 50; pointer-events: none; opacity: 0;
+    background: #1b1a1a; border: 1px solid #4a4949; border-radius: 10px;
+    padding: 10px 12px; font-size: 12px; color: #f5f5f5; line-height: 1.55;
+    max-width: 280px; box-shadow: 0 10px 28px rgba(0,0,0,.5);
+    transition: opacity .12s;
+  }
+  #tip b { color: #f2c811; display: block; margin-bottom: 5px; font-size: 12px; }
+  #tip .tr { display: flex; align-items: center; gap: 7px; }
+  #tip .tr i { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+  #tip .tr em { font-style: normal; flex: 1; color: #c9c8c8; }
+  #tip .tr span { font-weight: 700; white-space: nowrap; }
+  #tip .tr.net em { color: #9b9a9a; }
+
+  .seg { transition: stroke-width .18s ease; }
+  .seg:hover { stroke-width: 27; }
+
+  @media (max-width: 620px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    input[type="range"] { width: 100%; }
+    .slicer-body { width: 100%; }
+  }
 
   @media (max-width: 1100px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 900px) {
@@ -114,15 +153,29 @@
   <!-- KPI CARDS -->
   <div class="kpis" id="kpis"></div>
 
+  <!-- SLICER DE ESCENARIO -->
+  <div class="panel slicer">
+    <div>
+      <h2 class="ptitle">Slicer de escenario · % de adopción</h2>
+      <p class="psub">¿Qué porcentaje de los beneficios proyectados se materializa? Mueve el control para simular escenarios.</p>
+    </div>
+    <div class="slicer-body">
+      <button class="sbtn active" data-p="1">Base · 100%</button>
+      <button class="sbtn" data-p="0.5">Pesimista · 50%</button>
+      <input type="range" id="adoption" min="10" max="100" step="5" value="100" aria-label="Nivel de adopción" />
+      <span class="sval"><b id="pVal">100%</b> adopción</span>
+    </div>
+  </div>
+
   <!-- FILA 1 -->
   <div class="row">
     <div class="panel c2">
       <h2 class="ptitle">Excedente operativo acumulado vs. inversión</h2>
-      <p class="psub">Línea de tiempo del retorno · Base: US$ 1.140/mes · Pesimista (50% adopción): US$ 570/mes</p>
+      <p class="psub">Línea de tiempo del retorno · Plan base: US$ 1.140/mes · La línea azul sigue el slicer · Pasa el cursor para ver el detalle</p>
       <div class="legend">
-        <span><i class="dot" style="background:#f2c811"></i> Escenario base</span>
-        <span><i class="dot" style="background:#00a4ef"></i> Pesimista (50%)</span>
-        <span><i class="dot" style="background:#7fba00"></i> Inversión US$ 900 · break-even día 24</span>
+        <span><i class="dot" style="background:#f2c811"></i> Plan base (100%)</span>
+        <span><i class="dot" style="background:#00a4ef"></i><span id="legActive"> Escenario activo (100%)</span></span>
+        <span><i class="dot" style="background:#7fba00"></i><span id="legInv"> Inversión US$ 900 · break-even día 24</span></span>
       </div>
       <svg class="chart" id="areaChart" viewBox="0 0 760 310" role="img" aria-label="Excedente acumulado"></svg>
     </div>
@@ -169,18 +222,18 @@
     </div>
 
     <div class="panel">
-      <h2 class="ptitle">Escenario base vs. pesimista</h2>
-      <p class="psub">Supuesto: solo 50% de adopción de la app</p>
+      <h2 class="ptitle">Escenario base vs. simulación</h2>
+      <p class="psub">La columna derecha responde al slicer superior · Referencia del documento: pesimista = 50% adopción</p>
       <table>
-        <thead><tr><th>Métrica</th><th class="r y">Base</th><th class="r b">Pesim.</th></tr></thead>
+        <thead><tr><th>Métrica</th><th class="r y">Base</th><th class="r b" id="thSim">Simul. (100%)</th></tr></thead>
         <tbody>
-          <tr><td>Beneficio mensual</td><td class="r"><b>US$ 1.140</b></td><td class="r pb">US$ 570</td></tr>
-          <tr><td>Payback period</td><td class="r"><b>24 días</b></td><td class="r pb">47 días</td></tr>
-          <tr><td>ROI a 12 meses</td><td class="r"><b>1.420%</b></td><td class="r pb">660%</td></tr>
-          <tr><td>Retorno neto año 1</td><td class="r"><b>US$ 12.780</b></td><td class="r pb">US$ 5.940</td></tr>
+          <tr><td>Beneficio mensual</td><td class="r"><b>US$ 1.140</b></td><td class="r pb" id="simMes">US$ 1.140</td></tr>
+          <tr><td>Payback period</td><td class="r"><b>24 días</b></td><td class="r pb" id="simPay">24 días</td></tr>
+          <tr><td>ROI a 12 meses</td><td class="r"><b>1.420%</b></td><td class="r pb" id="simRoi">1.420%</td></tr>
+          <tr><td>Retorno neto año 1</td><td class="r"><b>US$ 12.780</b></td><td class="r pb" id="simNet">US$ 12.780</td></tr>
         </tbody>
       </table>
-      <p class="note">Incluso con 50% de adopción, el ROI anual es 660%. No existe un escenario razonable donde esta inversión pierda dinero.</p>
+      <p class="note" id="simNote">Con 100% de adopción, el ROI anual es de <b>1.420%</b>. No existe un escenario razonable donde esta inversión pierda dinero.</p>
     </div>
   </div>
 
@@ -191,6 +244,7 @@
   </div>
 </div>
 
+<div id="tip"></div>
 <script>
 "use strict";
 const NS = "http://www.w3.org/2000/svg";
@@ -215,26 +269,85 @@ const ICONS = {
   shield: '<path d="M12 2.5l7.5 3v6c0 5-3.2 8.3-7.5 10-4.3-1.7-7.5-5-7.5-10v-6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.8 12l2.2 2.2 4.2-4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
 };
 
+/* ---------- KPIs ---------- */
+const INVERSION = 900, PLAN_MES = 1140;
+
 const KPIS = [
-  { label: "Inversión inicial", value: "US$ 900", sub: "Pago único · Sin recurrentes", icon: "dollar", color: "#f2c811" },
-  { label: "ROI a 12 meses", value: "1.420%", sub: "14,2× la inversión", icon: "trend", color: "#7fba00" },
-  { label: "Payback period", value: "24 días", sub: "≈ 0,79 meses", icon: "clock", color: "#00a4ef" },
-  { label: "Ratio por dólar", value: "14,20×", sub: "Cada US$ 1 → US$ 14,20", icon: "ratio", color: "#f2c811" },
-  { label: "Beneficio mensual", value: "US$ 1.140", sub: "Ahorros + ingresos", icon: "coins", color: "#e8a33d" },
-  { label: "Retorno neto año 1", value: "US$ 12.780", sub: "Beneficio – inversión", icon: "shield", color: "#7fba00" }
+  { key: "inversion", label: "Inversión inicial", value: "US$ 900", sub: "Pago único · Sin recurrentes", icon: "dollar", color: "#f2c811" },
+  { key: "roi", label: "ROI a 12 meses", icon: "trend", color: "#7fba00" },
+  { key: "payback", label: "Payback period", icon: "clock", color: "#00a4ef" },
+  { key: "ratio", label: "Ratio por dólar", icon: "ratio", color: "#f2c811" },
+  { key: "mes", label: "Beneficio mensual", icon: "coins", color: "#e8a33d" },
+  { key: "neto", label: "Retorno neto año 1", icon: "shield", color: "#7fba00" }
 ];
 
 const kpisEl = document.getElementById("kpis");
+const kpiVals = {}, kpiSubs = {};
 KPIS.forEach(k => {
   const d = document.createElement("div");
   d.className = "kpi";
   d.innerHTML =
     '<div class="top"><span class="lbl">' + k.label + '</span>' +
     '<svg viewBox="0 0 24 24" style="color:' + k.color + '">' + ICONS[k.icon] + '</svg></div>' +
-    '<div class="val" style="color:' + k.color + '">' + k.value + '</div>' +
-    '<div class="sub">' + k.sub + '</div>';
+    '<div class="val" style="color:' + k.color + '">' + (k.value || "—") + '</div>' +
+    '<div class="sub">' + (k.sub || "") + '</div>';
   kpisEl.appendChild(d);
+  kpiVals[k.key] = d.querySelector(".val");
+  kpiSubs[k.key] = d.querySelector(".sub");
 });
+
+/* ---------- Métricas del escenario ---------- */
+function metrics(p) {
+  const mes = PLAN_MES * p;
+  const anual = mes * 12;
+  const roi = (anual - INVERSION) / INVERSION * 100;
+  return {
+    mes: mes, anual: anual, roi: roi,
+    dias: Math.round(INVERSION / mes * 30),
+    neto: anual - INVERSION, ratio: roi / 100
+  };
+}
+const fmtInt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const fmtPct = n => fmtInt(n) + "%";
+const fmtDec = (n, d) => n.toFixed(d).replace(".", ",");
+
+/* ---------- Animación de valores ---------- */
+const anim = {};
+function tween(key, target, fmt) {
+  const from = (anim[key] !== undefined) ? anim[key] : target;
+  anim[key] = target;
+  if (anim[key + "-raf"]) cancelAnimationFrame(anim[key + "-raf"]);
+  const node = kpiVals[key], t0 = performance.now(), dur = 400;
+  const step = t => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    node.textContent = fmt(from + (target - from) * e);
+    if (k < 1) anim[key + "-raf"] = requestAnimationFrame(step);
+  };
+  anim[key + "-raf"] = requestAnimationFrame(step);
+}
+
+/* ---------- Tooltip flotante ---------- */
+const tip = document.getElementById("tip");
+function showTip(html, ev) {
+  tip.innerHTML = html;
+  tip.style.opacity = "1";
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + w > window.innerWidth - 8) x = ev.clientX - w - pad;
+  if (y + h > window.innerHeight - 8) y = ev.clientY - h - pad;
+  tip.style.left = x + "px";
+  tip.style.top = y + "px";
+}
+function hideTip() { tip.style.opacity = "0"; }
+
+document.addEventListener("mousemove", e => {
+  const t = e.target.closest ? e.target.closest("[data-tip]") : null;
+  if (t) showTip(t.getAttribute("data-tip"), e);
+  else if (!e.target.closest || !e.target.closest("#areaChart")) hideTip();
+});
+
+let updateAreaFn = null;
+let P = 1;
 
 /* ---------- GRÁFICO DE ÁREA: ACUMULADO ---------- */
 (function () {
@@ -254,32 +367,65 @@ KPIS.forEach(k => {
     el("text", { x: X(i), y: H - 10, "text-anchor": "middle", "font-size": 11, fill: GRAY, _txt: i === 0 ? "Día 0" : "M" + i }, svg);
   }
 
-  function area(vals, color, gradId, opTop) {
-    const g = el("linearGradient", { id: gradId, x1: 0, y1: 0, x2: 0, y2: 1 }, el("defs", {}, svg));
-    el("stop", { offset: "0%", "stop-color": color, "stop-opacity": opTop }, g);
-    el("stop", { offset: "100%", "stop-color": color, "stop-opacity": 0.03 }, g);
+  // gradientes
+  const defs = el("defs", {}, svg);
+  [["gAct", "#00a4ef", 0.35], ["gBase", "#f2c811", 0.45]].forEach(pair => {
+    const g = el("linearGradient", { id: pair[0], x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el("stop", { offset: "0%", "stop-color": pair[1], "stop-opacity": pair[2] }, g);
+    el("stop", { offset: "100%", "stop-color": pair[1], "stop-opacity": 0.03 }, g);
+  });
 
-    let path = "", fillPath = "";
-    vals.forEach((v, i) => { path += (i ? " L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); });
-    fillPath = path + " L" + X(N).toFixed(1) + " " + Y(0) + " L" + X(0).toFixed(1) + " " + Y(0) + " Z";
+  const baseVals = Array.from({ length: 13 }, (_, m) => PLAN_MES * m);
+  let actVals = baseVals.slice();
+  const pathOf = vals => vals.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join(" ");
+  const fillOf = vals => pathOf(vals) + " L" + X(N).toFixed(1) + " " + Y(0).toFixed(1) + " L" + X(0).toFixed(1) + " " + Y(0).toFixed(1) + " Z";
 
-    const a = el("path", { d: fillPath, fill: "url(#" + gradId + ")", stroke: "none" }, svg);
-    const l = el("path", { d: path, fill: "none", stroke: color, "stroke-width": 2.4 }, svg);
-    // tooltips nativos
-    const t = document.createElementNS(NS, "title");
-    t.textContent = "Mes 12: " + usd(vals[12]);
-    l.appendChild(t);
-    const t2 = document.createElementNS(NS, "title");
-    t2.textContent = "Mes 12: " + usd(vals[12]);
-    a.appendChild(t2);
-  }
-
-  area(Array.from({ length: 13 }, (_, m) => 570 * m), "#00a4ef", "gPes", 0.35);
-  area(Array.from({ length: 13 }, (_, m) => 1140 * m), "#f2c811", "gBase", 0.45);
+  // escenario activo (azul) debajo, plan base (amarillo) encima
+  const actFill = el("path", { d: fillOf(actVals), fill: "url(#gAct)", stroke: "none" }, svg);
+  const actLine = el("path", { d: pathOf(actVals), fill: "none", stroke: "#00a4ef", "stroke-width": 2.2 }, svg);
+  el("path", { d: fillOf(baseVals), fill: "url(#gBase)", stroke: "none" }, svg);
+  el("path", { d: pathOf(baseVals), fill: "none", stroke: "#f2c811", "stroke-width": 2.6 }, svg);
 
   // línea de referencia: inversión
-  el("line", { x1: padL, y1: Y(900), x2: W - padR, y2: Y(900), stroke: "#7fba00", "stroke-dasharray": "6 4", "stroke-width": 1.5 }, svg);
-  el("text", { x: W - padR - 4, y: Y(900) + 16, "text-anchor": "end", "font-size": 11, fill: "#7fba00", _txt: "Inversión US$ 900 · break-even día 24" }, svg);
+  el("line", { x1: padL, y1: Y(INVERSION), x2: W - padR, y2: Y(INVERSION), stroke: "#7fba00", "stroke-dasharray": "6 4", "stroke-width": 1.5 }, svg);
+  el("text", { x: W - padR - 4, y: Y(INVERSION) + 16, "text-anchor": "end", "font-size": 11, fill: "#7fba00", _txt: "Inversión US$ 900 · break-even día 24" }, svg);
+
+  // crosshair
+  const ch = el("g", { opacity: 0, "pointer-events": "none" }, svg);
+  const chLine = el("line", { y1: padT, y2: H - padB, stroke: "#c9c8c8", "stroke-dasharray": "3 3", "stroke-width": 1 }, ch);
+  const chBase = el("circle", { r: 4.5, fill: "#f2c811", stroke: "#252424", "stroke-width": 1.5 }, ch);
+  const chAct = el("circle", { r: 4.5, fill: "#00a4ef", stroke: "#252424", "stroke-width": 1.5 }, ch);
+
+  updateAreaFn = p => {
+    actVals = Array.from({ length: 13 }, (_, m) => PLAN_MES * p * m);
+    actLine.setAttribute("d", pathOf(actVals));
+    actFill.setAttribute("d", fillOf(actVals));
+    if (ch.getAttribute("opacity") === "1") {
+      const i = Math.round((parseFloat(chBase.getAttribute("cx")) - padL) / ((W - padL - padR) / N));
+      chAct.setAttribute("cy", Y(actVals[i]));
+    }
+  };
+
+  svg.addEventListener("mousemove", ev => {
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    const mx = (ev.clientX - r.left) * (W / r.width);
+    const i = Math.max(0, Math.min(N, Math.round((mx - padL) / ((W - padL - padR) / N))));
+    const x = X(i);
+    ch.setAttribute("opacity", 1);
+    chLine.setAttribute("x1", x); chLine.setAttribute("x2", x);
+    chBase.setAttribute("cx", x); chBase.setAttribute("cy", Y(baseVals[i]));
+    chAct.setAttribute("cx", x); chAct.setAttribute("cy", Y(actVals[i]));
+    showTip(
+      "<b>" + (i === 0 ? "Día 0 · lanzamiento" : "Mes " + i) + "</b>" +
+      "<div class='tr'><i style='background:#f2c811'></i><em>Plan base</em><span>" + usd(baseVals[i]) + "</span></div>" +
+      "<div class='tr'><i style='background:#00a4ef'></i><em>Escenario (" + Math.round(P * 100) + "%)</em><span>" + usd(actVals[i]) + "</span></div>" +
+      "<div class='tr'><i style='background:#7fba00'></i><em>Inversión</em><span>US$ 900</span></div>" +
+      (i > 0 ? "<div class='tr net'><em>Neto vs. inversión</em><span>" + usd(actVals[i] - INVERSION) + "</span></div>" : ""),
+      ev
+    );
+  });
+  svg.addEventListener("mouseleave", () => { ch.setAttribute("opacity", 0); hideTip(); });
 })();
 
 /* ---------- DONUT ---------- */
@@ -289,17 +435,19 @@ KPIS.forEach(k => {
   const pA = 440 / 1140;
   el("circle", { cx: 100, cy: 100, r: 70, fill: "none", stroke: "#373636", "stroke-width": 22 }, svg);
   el("circle", {
-    cx: 100, cy: 100, r: 70, fill: "none", stroke: "#f2c811", "stroke-width": 22,
-    "stroke-dasharray": (pA * C) + " " + C, transform: "rotate(-90 100 100)"
-  }, svg).appendChild(document.createElementNS(NS, "title")).textContent = "Ahorros: US$ 440";
+    cx: 100, cy: 100, r: 70, fill: "none", stroke: "#f2c811", "stroke-width": 22, class: "seg",
+    "stroke-dasharray": (pA * C) + " " + C, transform: "rotate(-90 100 100)",
+    "data-tip": "<b>Ahorros directos</b><div class='tr'><i style='background:#f2c811'></i><em>38,6% del beneficio</em><span>US$ 440 / mes</span></div>"
+  }, svg);
   el("circle", {
-    cx: 100, cy: 100, r: 70, fill: "none", stroke: "#00a4ef", "stroke-width": 22,
-    "stroke-dasharray": ((1 - pA) * C) + " " + C, "stroke-dashoffset": (-pA * C), transform: "rotate(-90 100 100)"
-  }, svg).appendChild(document.createElementNS(NS, "title")).textContent = "Ingresos: US$ 700";
+    cx: 100, cy: 100, r: 70, fill: "none", stroke: "#00a4ef", "stroke-width": 22, class: "seg",
+    "stroke-dasharray": ((1 - pA) * C) + " " + C, "stroke-dashoffset": (-pA * C), transform: "rotate(-90 100 100)",
+    "data-tip": "<b>Incremento de ingresos</b><div class='tr'><i style='background:#00a4ef'></i><em>61,4% del beneficio</em><span>US$ 700 / mes</span></div>"
+  }, svg);
 })();
 
 /* ---------- BARRAS HORIZONTALES ---------- */
-function hbars(svgId, data, color, rowH) {
+function hbars(svgId, data, color, rowH, tipLabel) {
   const svg = document.getElementById(svgId);
   const W = 760, labelW = 172, padR = 60;
   const maxV = Math.max(...data.map(d => d.value));
@@ -308,10 +456,10 @@ function hbars(svgId, data, color, rowH) {
     const y = i * rowH + 6, h = Math.min(18, rowH - 10);
     el("text", { x: 0, y: y + h / 2 + 4, "font-size": 11, fill: GRAY, _txt: d.name }, svg);
     const g = el("g", { class: "bar" }, svg);
-    const r = el("rect", { x: labelW, y: y, width: Math.max(2, (d.value / maxV) * barArea), height: h, rx: 4, fill: color }, g);
-    const t = document.createElementNS(NS, "title");
-    t.textContent = usd(d.value) + " / mes";
-    r.appendChild(t);
+    el("rect", {
+      x: labelW, y: y, width: Math.max(2, (d.value / maxV) * barArea), height: h, rx: 4, fill: color,
+      "data-tip": "<b>" + d.name + "</b><div class='tr'><i style='background:" + color + "'></i><em>" + tipLabel + "</em><span>" + usd(d.value) + " / mes</span></div>"
+    }, g);
     el("text", { x: labelW + Math.max(2, (d.value / maxV) * barArea) + 8, y: y + h / 2 + 4, "font-size": 11, fill: "#fff", "font-weight": 600, _txt: usd(d.value) }, svg);
   });
 }
@@ -329,8 +477,8 @@ const ingresos = [
   { name: "Conversión prospectos (push)", value: 250 },
   { name: "Aprobación rápida de ventas", value: 150 }
 ];
-hbars("ahorrosChart", ahorros, "#f2c811", 36);
-hbars("ingresosChart", ingresos, "#00a4ef", 36);
+hbars("ahorrosChart", ahorros, "#f2c811", 36, "Ahorro mensual");
+hbars("ingresosChart", ingresos, "#00a4ef", 36, "Incremento mensual");
 
 /* ---------- COMPARATIVA BARRAS AGRUPADAS ---------- */
 (function () {
@@ -356,18 +504,60 @@ hbars("ingresosChart", ingresos, "#00a4ef", 36);
   data.forEach((d, i) => {
     const cx = padL + slot * i + slot / 2;
     const x1 = cx - groupW / 2, x3 = x1 + bw + gap;
-    [[x1, d.anio1, "#f2c811", "Año 1"], [x3, d.anio3, "#e8a33d", "3 años"]].forEach(([x, v, c, serie]) => {
+    [[x1, d.anio1, "#f2c811", "Año 1"], [x3, d.anio3, "#e8a33d", "A 3 años"]].forEach(bar => {
       const g = el("g", { class: "bar" }, svg);
-      const r = el("rect", { x: x, y: Y(v), width: bw, height: Y(0) - Y(v), rx: 5, fill: c }, g);
-      const t = document.createElementNS(NS, "title");
-      t.textContent = d.name + " · " + serie + ": " + usd(v);
-      r.appendChild(t);
-      const lbl = v >= 1000 ? (v / 1000).toString().replace(".", ",") + "k" : String(v);
-      el("text", { x: x + bw / 2, y: Y(v) - 6, "text-anchor": "middle", "font-size": 10, fill: "#fff", "font-weight": 600, _txt: lbl }, svg);
+      el("rect", {
+        x: bar[0], y: Y(bar[1]), width: bw, height: Y(0) - Y(bar[1]), rx: 5, fill: bar[2],
+        "data-tip": "<b>" + d.name + "</b><div class='tr'><i style='background:" + bar[2] + "'></i><em>" + bar[3] + "</em><span>" + usd(bar[1]) + "</span></div>"
+      }, g);
+      const lbl = bar[1] >= 1000 ? (bar[1] / 1000).toString().replace(".", ",") + "k" : String(bar[1]);
+      el("text", { x: bar[0] + bw / 2, y: Y(bar[1]) - 6, "text-anchor": "middle", "font-size": 10, fill: "#fff", "font-weight": 600, _txt: lbl }, svg);
     });
     el("text", { x: cx, y: H - 9, "text-anchor": "middle", "font-size": 11, fill: GRAY, _txt: d.name }, svg);
   });
 })();
+
+/* ---------- SLICER DE ESCENARIO ---------- */
+const slider = document.getElementById("adoption");
+const pVal = document.getElementById("pVal");
+const sbtns = document.querySelectorAll(".sbtn");
+
+function applyScenario(p) {
+  P = Math.min(1, Math.max(0.1, p));
+  const m = metrics(P), pct = Math.round(P * 100);
+  pVal.textContent = pct + "%";
+  slider.value = String(pct);
+  sbtns.forEach(b => b.classList.toggle("active", Math.abs(parseFloat(b.dataset.p) - P) < 0.001));
+
+  // KPIs animados
+  tween("roi", m.roi, v => fmtPct(v));
+  kpiSubs.roi.textContent = fmtDec(m.ratio, 1) + "× la inversión";
+  tween("payback", m.dias, v => fmtInt(v) + " días");
+  kpiSubs.payback.textContent = "≈ " + fmtDec(INVERSION / m.mes, 2) + " meses";
+  tween("ratio", m.ratio, v => fmtDec(v, 2) + "×");
+  kpiSubs.ratio.textContent = "Cada US$ 1 → US$ " + fmtDec(m.ratio, 2);
+  tween("mes", m.mes, v => "US$ " + fmtInt(v));
+  kpiSubs.mes.textContent = "Ahorros + ingresos · " + pct + "% adopción";
+  tween("neto", m.neto, v => "US$ " + fmtInt(v));
+
+  // leyenda del gráfico de área
+  document.getElementById("legActive").textContent = " Escenario activo (" + pct + "%)";
+  document.getElementById("legInv").textContent = " Inversión US$ 900 · break-even día " + m.dias;
+  if (updateAreaFn) updateAreaFn(P);
+
+  // tabla de simulación
+  document.getElementById("thSim").textContent = "Simul. (" + pct + "%)";
+  document.getElementById("simMes").textContent = "US$ " + fmtInt(m.mes);
+  document.getElementById("simPay").textContent = m.dias + " días";
+  document.getElementById("simRoi").textContent = fmtPct(m.roi);
+  document.getElementById("simNet").textContent = "US$ " + fmtInt(m.neto);
+  document.getElementById("simNote").innerHTML =
+    "Con " + pct + "% de adopción, el ROI anual es de <b>" + fmtPct(m.roi) + "</b>. No existe un escenario razonable donde esta inversión pierda dinero.";
+}
+
+sbtns.forEach(b => b.addEventListener("click", () => applyScenario(parseFloat(b.dataset.p))));
+slider.addEventListener("input", () => applyScenario(parseInt(slider.value, 10) / 100));
+applyScenario(1);
 </script>
 </body>
 </html>
