@@ -105,6 +105,10 @@
   .stepper button:hover { background: #4a4949; color: #fff; }
   .stepper input { width: 48px; background: transparent; border: none; text-align: center; font-size: 16px; font-weight: 800; color: #f2c811; outline: none; appearance: textfield; -moz-appearance: textfield; }
   .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .money { display: flex; align-items: center; border: 1px solid #4a4949; background: #373636; border-radius: 10px; overflow: hidden; }
+  .money span { padding: 0 8px; font-size: 13px; font-weight: 700; color: #9b9a9a; }
+  .money input { width: 92px; background: transparent; border: none; text-align: right; font-size: 14px; font-weight: 800; color: #f2c811; outline: none; appearance: textfield; -moz-appearance: textfield; }
+  .money input::-webkit-outer-spin-button, .money input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .vchip { font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #373636; color: #c9c8c8; border: 1px solid #4a4949; cursor: pointer; transition: all .15s; }
   .vchip:hover { border-color: #f2c811; color: #fff; }
   .vchip.active { background: #f2c811; border-color: #f2c811; color: #252424; }
@@ -171,7 +175,7 @@
   <div class="panel slicer">
     <div>
       <h2 class="ptitle">Calculadora de ROI · Vendedores y adopción</h2>
-      <p class="psub">El beneficio escala linealmente: US$ 380/mes por vendedor · La inversión se mantiene fija en US$ 900 · Ambos controles recalculan el dashboard en vivo</p>
+      <p class="psub">El beneficio por vendedor escala con su facturación: US$ 380/mes por cada US$ 5.000 facturados · Inversión fija US$ 900 · Los tres controles recalculan el dashboard en vivo</p>
     </div>
     <div class="slicer-body">
       <div class="grp">
@@ -182,6 +186,11 @@
           <button type="button" id="vPlus" aria-label="Más vendedores">+</button>
         </div>
         <div class="grp" id="vChips"></div>
+        <span class="glbl">Fact./vendedor</span>
+        <div class="money">
+          <span>US$</span>
+          <input type="number" id="factInput" min="500" max="100000" step="500" value="5000" aria-label="Facturación promedio mensual por vendedor" />
+        </div>
       </div>
       <span class="sep"></span>
       <div class="grp">
@@ -228,12 +237,12 @@
     <div class="panel">
       <h2 class="ptitle">Ahorros directos por concepto</h2>
       <p class="psub" id="aSub">Subtotal: US$ 440 / mes</p>
-      <svg class="chart" id="ahorrosChart" viewBox="0 0 760 232" role="img" aria-label="Ahorros por concepto"></svg>
+      <svg class="chart" id="ahorrosChart" viewBox="0 0 760 292" role="img" aria-label="Ahorros por concepto"></svg>
     </div>
     <div class="panel">
       <h2 class="ptitle">Incremento de ingresos por concepto</h2>
       <p class="psub" id="iSub">Subtotal: US$ 700 / mes</p>
-      <svg class="chart" id="ingresosChart" viewBox="0 0 760 130" role="img" aria-label="Ingresos por concepto"></svg>
+      <svg class="chart" id="ingresosChart" viewBox="0 0 760 154" role="img" aria-label="Ingresos por concepto"></svg>
     </div>
   </div>
 
@@ -298,7 +307,7 @@ const ICONS = {
 };
 
 /* ---------- KPIs ---------- */
-const INVERSION = 900, POR_VENDEDOR = 380, FACT_VENDEDOR = 5000, V_BASE = 3;
+const INVERSION = 900, POR_VENDEDOR = 380, FACT_BASE = 5000, V_BASE = 3;
 
 const KPIS = [
   { key: "inversion", label: "Inversión inicial", value: "US$ 900", sub: "Pago único · Sin recurrentes", icon: "dollar", color: "#f2c811" },
@@ -326,7 +335,7 @@ KPIS.forEach(k => {
 
 /* ---------- Métricas del escenario ---------- */
 function metrics(p) {
-  const mes = POR_VENDEDOR * V * p;
+  const mes = POR_VENDEDOR * (F / FACT_BASE) * V * p;
   const anual = mes * 12;
   const roi = (anual - INVERSION) / INVERSION * 100;
   return {
@@ -377,6 +386,7 @@ document.addEventListener("mousemove", e => {
 let updateAreaFn = null;
 let P = 1;
 let V = V_BASE;
+let F = FACT_BASE;
 
 /* ---------- GRÁFICO DE ÁREA: ACUMULADO (eje auto-escalable) ---------- */
 (function () {
@@ -436,7 +446,7 @@ let V = V_BASE;
   const chAct = el("circle", { r: 4.5, fill: "#00a4ef", stroke: "#252424", "stroke-width": 1.5 }, ch);
 
   updateAreaFn = () => {
-    const baseMes = POR_VENDEDOR * V;
+    const baseMes = POR_VENDEDOR * (F / FACT_BASE) * V;
     baseVals = Array.from({ length: 13 }, (_, m) => baseMes * m);
     actVals = Array.from({ length: 13 }, (_, m) => baseMes * P * m);
     const target = Math.max(baseVals[12], 14000);
@@ -486,7 +496,7 @@ function renderDonut() {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
   const C = 2 * Math.PI * 70;
   const pA = 440 / 1140;
-  const esc = (V / V_BASE) * P;
+  const esc = (V / V_BASE) * (F / FACT_BASE) * P;
   const aV = Math.round(440 * esc), iV = Math.round(700 * esc);
   el("circle", { cx: 100, cy: 100, r: 70, fill: "none", stroke: "#373636", "stroke-width": 22 }, svg);
   el("circle", {
@@ -503,23 +513,23 @@ function renderDonut() {
   document.getElementById("donutI").innerHTML = usd(iV) + " <small>(61,4%)</small>";
 }
 
-/* ---------- BARRAS HORIZONTALES (re-renderizables y escalables) ---------- */
+/* ---------- BARRAS HORIZONTALES (re-renderizables, escalables y legibles) ---------- */
 function hbars(svgId, data, color, rowH, tipLabel, scale) {
   const svg = document.getElementById(svgId);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
   const scaled = data.map(d => ({ name: d.name, value: Math.round(d.value * scale) }));
-  const W = 760, labelW = 172, padR = 60;
+  const W = 760, labelW = 210, padR = 74;
   const maxV = Math.max(...scaled.map(d => d.value));
   const barArea = W - labelW - padR;
   scaled.forEach((d, i) => {
-    const y = i * rowH + 6, h = Math.min(18, rowH - 10);
-    el("text", { x: 0, y: y + h / 2 + 4, "font-size": 11, fill: GRAY, _txt: d.name }, svg);
+    const y = i * rowH + 8, h = Math.min(24, rowH - 14);
+    el("text", { x: 0, y: y + h / 2 + 5, "font-size": 13.5, fill: "#c9c8c8", _txt: d.name }, svg);
     const g = el("g", { class: "bar" }, svg);
     el("rect", {
-      x: labelW, y: y, width: Math.max(2, (d.value / maxV) * barArea), height: h, rx: 4, fill: color,
+      x: labelW, y: y, width: Math.max(3, (d.value / maxV) * barArea), height: h, rx: 5, fill: color,
       "data-tip": "<b>" + d.name + "</b><div class='tr'><i style='background:" + color + "'></i><em>" + tipLabel + "</em><span>" + usd(d.value) + " / mes</span></div>"
     }, g);
-    el("text", { x: labelW + Math.max(2, (d.value / maxV) * barArea) + 8, y: y + h / 2 + 4, "font-size": 11, fill: "#fff", "font-weight": 600, _txt: usd(d.value) }, svg);
+    el("text", { x: labelW + Math.max(3, (d.value / maxV) * barArea) + 10, y: y + h / 2 + 5, "font-size": 13.5, fill: "#fff", "font-weight": 700, _txt: usd(d.value) }, svg);
   });
 }
 
@@ -595,6 +605,10 @@ function setV(v) {
   V = Math.min(20, Math.max(1, Math.round(v) || 1));
   applyModel();
 }
+function setF(f) {
+  F = Math.min(100000, Math.max(500, Math.round(f) || FACT_BASE));
+  applyModel();
+}
 function setP(p) {
   P = Math.min(1, Math.max(0.1, p));
   applyModel();
@@ -604,21 +618,22 @@ function applyModel() {
   const m = metrics(P);   // escenario activo
   const mb = metrics(1);  // plan base (100% adopción)
   const pct = Math.round(P * 100);
-  const esc = (V / V_BASE) * P;
+  const esc = (V / V_BASE) * (F / FACT_BASE) * P;
 
   // controles
   pVal.textContent = pct + "%";
   slider.value = String(pct);
   vInput.value = String(V);
+  document.getElementById("factInput").value = String(F);
   sbtns.forEach(b => b.classList.toggle("active", Math.abs(parseFloat(b.dataset.p) - P) < 0.001));
   vchips.forEach(b => b.classList.toggle("active", parseInt(b.textContent, 10) === V));
 
   // resumen del simulador + header
   document.getElementById("sumChip").innerHTML =
-    "Facturación ≈ <b>US$ " + fmtInt(FACT_VENDEDOR * V) + "</b>/mes · Beneficio <b>US$ " + fmtInt(m.mes) + "</b>/mes";
+    "Facturación ≈ <b>US$ " + fmtInt(F * V) + "</b>/mes · Beneficio <b>US$ " + fmtInt(m.mes) + "</b>/mes";
   document.getElementById("hdrSub").textContent =
     "Digitalización de la fuerza de ventas · " + V + (V === 1 ? " vendedor" : " vendedores") +
-    " · Facturación ≈ US$ " + fmtInt(FACT_VENDEDOR * V) + "/mes";
+    " · Facturación ≈ US$ " + fmtInt(F * V) + "/mes";
 
   // KPIs animados (escenario activo)
   tween("roi", m.roi, v => fmtPct(v));
@@ -645,8 +660,8 @@ function applyModel() {
   renderDonut();
   document.getElementById("aSub").textContent = "Subtotal: " + usd(440 * esc) + " / mes";
   document.getElementById("iSub").textContent = "Subtotal: " + usd(700 * esc) + " / mes";
-  hbars("ahorrosChart", ahorros, "#f2c811", 36, "Ahorro mensual", esc);
-  hbars("ingresosChart", ingresos, "#00a4ef", 36, "Incremento mensual", esc);
+  hbars("ahorrosChart", ahorros, "#f2c811", 46, "Ahorro mensual", esc);
+  hbars("ingresosChart", ingresos, "#00a4ef", 46, "Incremento mensual", esc);
 
   // tabla base vs simulación
   document.getElementById("baseMes").textContent = usd(mb.mes);
@@ -679,6 +694,7 @@ function applyModel() {
 document.getElementById("vMinus").addEventListener("click", () => setV(V - 1));
 document.getElementById("vPlus").addEventListener("click", () => setV(V + 1));
 vInput.addEventListener("change", () => setV(parseInt(vInput.value, 10)));
+document.getElementById("factInput").addEventListener("change", e => setF(parseInt(e.target.value, 10)));
 sbtns.forEach(b => b.addEventListener("click", () => setP(parseFloat(b.dataset.p))));
 slider.addEventListener("input", () => setP(parseInt(slider.value, 10) / 100));
 applyModel();
