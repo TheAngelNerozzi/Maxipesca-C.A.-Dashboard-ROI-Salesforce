@@ -687,11 +687,6 @@ function applyModel() {
       fmtPct(m.roi) + "</b>, pero el beneficio sigue acumulándose mes a mes y la inversión se recupera hacia el día <b>" + m.dias + "</b>.";
   }
 
-  // veredicto
-  document.getElementById("verdict").textContent = m.ratio > 0
-    ? "US$ 1 invertido regresa como US$ " + fmtDec(m.ratio, 2)
-    : "Escenario extremo: la inversión se recupera hacia el día " + m.dias;
-}
 
 document.getElementById("vMinus").addEventListener("click", () => setV(V - 1));
 document.getElementById("vPlus").addEventListener("click", () => setV(V + 1));
